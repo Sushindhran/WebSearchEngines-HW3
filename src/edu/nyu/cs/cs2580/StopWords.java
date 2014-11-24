@@ -9,6 +9,9 @@ public class StopWords {
 
     public Vector<String> getStopWords() {
         stopWords.add("the");
+        stopWords.add("for");
+        stopWords.add("on");
+        stopWords.add("to");
         stopWords.add("and");
         stopWords.add("or");
         stopWords.add("an");
@@ -16,10 +19,12 @@ public class StopWords {
         stopWords.add("but");
         stopWords.add("the");
         stopWords.add("is");
-        stopWords.add("an");
+        stopWords.add("of");
+        stopWords.add("at");
         stopWords.add("he");
         stopWords.add("she");
         stopWords.add("be");
+        stopWords.add("because");
         stopWords.add("me");
         stopWords.add("has");
         stopWords.add("http");
@@ -28,7 +33,6 @@ public class StopWords {
         stopWords.add("about");
         stopWords.add("after");
         stopWords.add("ago");
-        stopWords.add("an");
         stopWords.add("also");
         stopWords.add("are");
         stopWords.add("by");
@@ -39,7 +43,16 @@ public class StopWords {
         stopWords.add("in");
         stopWords.add("shall");
         stopWords.add("you");
+        stopWords.add("that");
+        stopWords.add("it");
+        stopWords.add("as");
+        stopWords.add("my");
+        stopWords.add("until");
         stopWords.add("[edit]");
+        stopWords.add("from");
+        for(int i=0; i<100;i++) {
+            stopWords.add((Integer.toString(i)));
+        }
         return stopWords;
     }
 }

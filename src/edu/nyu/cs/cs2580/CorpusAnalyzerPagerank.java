@@ -11,8 +11,8 @@ import java.util.*;
 public class CorpusAnalyzerPagerank extends CorpusAnalyzer {
     private Map<String, Integer> documents = new HashMap<String, Integer>();
     private ArrayList<ArrayList<Integer>> docLinks = new ArrayList<ArrayList<Integer>>();
-    private ArrayList<Boolean> isRedirect = new ArrayList<Boolean>();
     private ArrayList<Integer> docLinkCount = new ArrayList<Integer>();
+    private Map<Integer, Integer> redirectMap = new HashMap<Integer, Integer>();
     private ArrayList<Float> _R = new ArrayList<Float> ();
     private float lambda = 0.9f;
     private int iterations = 2;
@@ -55,6 +55,7 @@ public class CorpusAnalyzerPagerank extends CorpusAnalyzer {
                 findLinks(fileEntry.getName());
             }
         }
+        resolveRedirects();
     }
 
     /**
@@ -84,7 +85,7 @@ public class CorpusAnalyzerPagerank extends CorpusAnalyzer {
 
         for(int i = 0; i<iterations; i++) {
             for (int j = 0; j < corpusSize; j++) {
-                _R.add(1.0f/lambda);
+                _R.add(lambda/corpusSize);
             }
 
             for (Map.Entry<String, Integer> entry : documents.entrySet()) {
@@ -129,7 +130,6 @@ public class CorpusAnalyzerPagerank extends CorpusAnalyzer {
                 documents.put(file.getName(), docCount);
                 docLinkCount.add(0);
                 docLinks.add(new ArrayList<Integer>());
-                isRedirect.add(false);
                 docCount++;
             }
         }
@@ -137,18 +137,54 @@ public class CorpusAnalyzerPagerank extends CorpusAnalyzer {
 
     public void findLinks(String fileName) throws IOException {
         int destId, sourceId = documents.get(fileName);
+        //System.out.println("FileName "+fileName);
         String wholePath = _options._corpusPrefix + "/" + fileName;
         File file = new File(wholePath);
         HeuristicLinkExtractor hle = new HeuristicLinkExtractor(file);
         String link;
         while ((link = hle.getNextInCorpusLinkTarget())!=null) {
             if (documents.get(link) != null) {
+                //Check if redirect
                 destId = documents.get(link);
-                if (!docLinks.get(sourceId).contains(destId)) {
-                    docLinkCount.set(sourceId, docLinkCount.get(sourceId)+1);
-                    docLinks.get(sourceId).add(destId);
+                if(HtmlParser.checkIfRedirect( _options._corpusPrefix+"/"+link)) {
+                    redirectMap.put(sourceId, destId);
+                    break;
+                } else {
+
+                    if (!docLinks.get(sourceId).contains(destId)) {
+                        docLinkCount.set(sourceId, docLinkCount.get(sourceId) + 1);
+                        docLinks.get(sourceId).add(destId);
+                    }
                 }
             }
+        }
+    }
+
+    private void resolveRedirects() throws IOException{
+        System.out.println("Resolving ");
+
+        //Resolve redirects
+        Set<Integer> redirectSources = redirectMap.keySet();
+        Iterator<ArrayList<Integer>> dit = docLinks.iterator();
+        while(dit.hasNext()) {
+            ArrayList<Integer> arrayList = dit.next();
+            ArrayList<Integer> removeList = new ArrayList<Integer>();
+            ArrayList<Integer> addList = new ArrayList<Integer>();
+            Iterator<Integer> sIt = redirectSources.iterator();
+            while(sIt.hasNext()) {
+                Integer s = sIt.next();
+                if(arrayList.contains(s)) {
+                    removeList.add(s);
+                    if(!arrayList.contains(redirectMap.get(s))) {
+                        addList.add(redirectMap.get(s));
+                    }
+                }
+            }
+
+            //Add or remove
+            arrayList.removeAll(removeList);
+            arrayList.addAll(addList);
+
         }
     }
 

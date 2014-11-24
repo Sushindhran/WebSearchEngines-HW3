@@ -22,11 +22,11 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     //Tracker list that holds the latest position of occurrence inserted in the map.
     private ArrayList<Integer> trackerList = new ArrayList<Integer>();
 
-    private ArrayList<Integer> noOfObjects = new ArrayList<Integer>();
+    private Map<Integer, ArrayList<Integer>> cache = new HashMap<Integer, ArrayList<Integer>>();
 
-	/*
-	 * This is the code for pseudo-random feedback
-	 */
+  /*
+   * This is the code for pseudo-random feedback
+   */
 
     private Map<Integer, ArrayList<Integer>> documentTermMap = new HashMap<Integer, ArrayList<Integer>>();
     private Map<Integer, String> reverseDictionary = new HashMap<Integer, String>();
@@ -58,7 +58,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 System.out.println("Constructing Partial Index" + (int) Math.ceil(indexCount / 500));
                 persist((int) Math.ceil(indexCount / 500));
                 persist_DocTermMap((int) Math.ceil(indexCount / 500));
-                //index.clear();
+                index.clear();
                 fileCount = 0;
             }
             try {
@@ -70,7 +70,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             fileCount++;
         }
         persist((int)Math.floor(indexCount/500)+1);
-        persist_DocTermMap((int) Math.ceil(indexCount / 500));
+        persist_DocTermMap((int) Math.floor(indexCount / 500)+1);
         System.out.println("Constructing Partial Index " + (int)(Math.floor(indexCount/500)+1.0));
         index.clear();
 
@@ -118,23 +118,23 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     }
 
 
-	/* This function persists three data structures whenever called and clears them.
-	 * 1) Document map in tsv format
-	 * 2) Dictionary
-	 * 3) Index is tsv format
-	 */
+  /* This function persists three data structures whenever called and clears them.
+   * 1) Document map in tsv format
+   * 2) Dictionary
+   * 3) Index is tsv format
+   */
 
     private void persist(int fileCount) throws IOException {
         partialFileCount++;
         try {
             //Sort the index before making a partial index
-            StringBuilder indexBuilder = new StringBuilder(_options._indexPrefix).append(File.separator).append(fileCount + "tempIndex.tsv");
+            StringBuilder indexBuilder = new StringBuilder(_options._indexPrefix).append("/").append(fileCount + "tempIndex.tsv");
             BufferedWriter indexWriter = new BufferedWriter(new FileWriter(indexBuilder.toString(), true));
 
-			/* The Index is saved as follows in tsv format
-			 * Col1 : TermId
-			 * Col2 : List of Documents and corresponding values-separated by a space.
-			 */
+      /* The Index is saved as follows in tsv format
+       * Col1 : TermId
+       * Col2 : List of Documents and corresponding values-separated by a space.
+       */
 
             Set<Integer> indexKeys = index.keySet();
 
@@ -188,13 +188,13 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     private void persist_DocTermMap(int fileCount) throws IOException {
         try {
             //Sort the index before making a partial index
-            StringBuilder indexBuilder = new StringBuilder(_options._indexPrefix).append(File.separator).append(fileCount + "DocTermMap.tsv");
+            StringBuilder indexBuilder = new StringBuilder(_options._indexPrefix).append("/").append(fileCount + "DocTermMap.tsv");
             BufferedWriter indexWriter = new BufferedWriter(new FileWriter(indexBuilder.toString(), true));
 
-			/* The Index is saved as follows in tsv format
-			 * Col1 : TermId
-			 * Col2 : List of Documents and corresponding values-separated by a space.
-			 */
+      /* The Index is saved as follows in tsv format
+       * Col1 : TermId
+       * Col2 : List of Documents and corresponding values-separated by a space.
+       */
 
             Set<Integer> indexKeys = documentTermMap.keySet();
 
@@ -238,7 +238,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
 
     private void writeDocumentsandDictionary() throws IOException {
-        String docFile = File.separator+"documentsAndDict.tsv";
+        String docFile = "/documentsAndDict.tsv";
         StringBuilder mergebuilder = new StringBuilder(_options._indexPrefix).append(docFile);
         BufferedWriter mergeWriter = new BufferedWriter(new FileWriter(mergebuilder.toString(), true));
 
@@ -278,79 +278,61 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         //Delete ever file except invertedIndexOccurence.tsv
 
         for(File eachFile : listOfFiles) {
-            if(!eachFile.getName().equals(finalIndexFile) && !eachFile.getName().equals(dictFile) && !eachFile.getName().contains("DocTermMap")) {
+            if(!eachFile.getName().equals(finalIndexFile) && !eachFile.getName().equals(dictFile) && !eachFile.getName().contains("DocTermMap")
+                    && !eachFile.getName().contains("pageRank")&& !eachFile.getName().contains("numViews")) {
                 eachFile.delete();
             }
         }
     }
 
     private void mergeIndexFiles() throws IOException {
-        String indexFile = File.separator+"invertedIndexOccurrence.tsv";
-        mergeTwoFiles(File.separator+"1tempIndex.tsv", File.separator+"2tempIndex.tsv");
-
+        String indexFile = "/invertedIndexOccurrence.tsv";
+        mergeTwoFiles("/1tempIndex.tsv", "/2tempIndex.tsv");
+        File f1 = new File(_options._indexPrefix+"/1tempIndex.tsv");
+        File f2 = new File(_options._indexPrefix+"/2tempIndex.tsv");
+        f1.delete();
+        f2.delete();
         for(int i=3; i<=partialFileCount; i++) {
-            File oldFile = new File(_options._indexPrefix+File.separator+"temp.tsv");
-            File newFile = new File(_options._indexPrefix+File.separator+"first.tsv");
+            File oldFile = new File(_options._indexPrefix+"/temp.tsv");
+            System.out.println("Deleted temp "+i);
+            File newFile = new File(_options._indexPrefix+"/first.tsv");
             oldFile.renameTo(newFile);
             try {
+                File temp = new File(_options._indexPrefix+"/temp.tsv");
+                temp.delete();
                 mergeTwoFiles("first.tsv", i + "tempIndex.tsv");
             }catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        File oldFile = new File(_options._indexPrefix+File.separator+"temp.tsv");
+        File oldFile = new File(_options._indexPrefix+"/temp.tsv");
         File newFile = new File(_options._indexPrefix+indexFile);
         oldFile.renameTo(newFile);
-        constructCompressedFile();
     }
-
-
-    private void constructCompressedFile() throws IOException {
-        String indexFile = File.separator+"invertedIndexOccurrence.tsv";
-        String indexFileCompressed = File.separator+"invertedIndexCompression.tsv";
-        File outputFile = new File(_options._indexPrefix+indexFileCompressed);
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(_options._indexPrefix+indexFileCompressed));
-        outputFile.createNewFile();
-        try {
-            BufferedReader originalReader = new BufferedReader(new FileReader(_options._indexPrefix+indexFile));
-            String line = null;
-            while((line = originalReader.readLine()) != null) {
-                List<BitSet> bytes = convertCompress(line);
-                oos.writeObject(bytes);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            oos.close();
-        }
-    }
-
 
     private void mergeTwoFiles(String firstFile, String secondFile) throws IOException {
 
         try{
-            StringBuilder mergebuilder = new StringBuilder(_options._indexPrefix).append(File.separator+"temp.tsv");
+            StringBuilder mergebuilder = new StringBuilder(_options._indexPrefix).append("/temp.tsv");
             BufferedWriter mergeWriter = new BufferedWriter(new FileWriter(mergebuilder.toString(), true));
 
-            StringBuilder firstbuilder = new StringBuilder(_options._indexPrefix).append(File.separator+firstFile);
+            StringBuilder firstbuilder = new StringBuilder(_options._indexPrefix).append("/"+firstFile);
             BufferedReader firstReader = new BufferedReader(new FileReader(firstbuilder.toString()));
 
-            StringBuilder secondbuilder = new StringBuilder(_options._indexPrefix).append(File.separator+secondFile);
+            StringBuilder secondbuilder = new StringBuilder(_options._indexPrefix).append("/"+secondFile);
             BufferedReader secondReader = new BufferedReader(new FileReader(secondbuilder.toString()));
 
             if(firstFile ==null || firstFile ==".DS_Store" || firstFile == "DocMap.tsv" || firstFile == "Dictionary.tsv") {
-                File oldFile = new File(_options._indexPrefix + File.separator + secondFile);
-                File newFile = new File(_options._indexPrefix+File.separator+"temp.tsv");
+                File oldFile = new File(_options._indexPrefix + "/" + secondFile);
+                File newFile = new File(_options._indexPrefix+"/temp.tsv");
                 oldFile.renameTo(newFile);
                 mergeWriter.close();
                 firstReader.close();
                 secondReader.close();
                 return;
             } else if(secondFile == null || secondFile ==".DS_Store" || firstFile == "DocMap.tsv" || firstFile == "Dictionary.tsv") {
-                File oldFile = new File(_options._indexPrefix + File.separator + firstFile);
-                File newFile = new File(_options._indexPrefix+File.separator+"temp.tsv");
+                File oldFile = new File(_options._indexPrefix + "/" + firstFile);
+                File newFile = new File(_options._indexPrefix+"/temp.tsv");
                 oldFile.renameTo(newFile);
                 mergeWriter.close();
                 firstReader.close();
@@ -455,27 +437,24 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
     private void splitFiles() throws FileNotFoundException, IOException {
         String indexFile = "invertedIndexOccurrence.tsv";
-        StringBuilder firstbuilder = new StringBuilder(_options._indexPrefix).append(File.separator+indexFile);
+        StringBuilder firstbuilder = new StringBuilder(_options._indexPrefix).append("/"+indexFile);
         BufferedReader firstReader = new BufferedReader(new FileReader(firstbuilder.toString()));
 
-        StringBuilder splitbuilder = new StringBuilder(_options._indexPrefix).append(File.separator+"index1.tsv");
+        StringBuilder splitbuilder = new StringBuilder(_options._indexPrefix).append("/index1.tsv");
         BufferedWriter splitWriter = new BufferedWriter(new FileWriter(splitbuilder.toString(), true));
 
         int count = 0, indexCount = 1;
         String line;
-        int objectCounter=0;
         while((line = firstReader.readLine()) != null) {
             List<String> list = stringTokenizer(line);
 
             if(list.size() == 1) {
                 count++;
-                if(count == 5000) {
-                    noOfObjects.add(objectCounter);
-                    objectCounter=0;
+                if(count == 500 ) {
                     count = 0;
                     indexCount++;
                     splitWriter.close();
-                    splitbuilder = new StringBuilder(_options._indexPrefix).append(File.separator+"index"+indexCount+".tsv");
+                    splitbuilder = new StringBuilder(_options._indexPrefix).append("/index"+indexCount+".tsv");
                     splitWriter = new BufferedWriter(new FileWriter(splitbuilder.toString(), true));
                     splitWriter.flush();
                 }
@@ -502,7 +481,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     private int updateIndex(String document, int indexCount) {
         String[] words = document.split(" ");
         for (int i=0; i<words.length; i++) {
-            String lower = words[i].toLowerCase();
+            String lower = words[i].toLowerCase().trim();
             //lower.replace("\""," ").trim();
             lower = lower.replaceAll(" ","");
             Vector<String> stopWords = new StopWords().getStopWords();
@@ -558,7 +537,8 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         Map<Integer, Integer> docWordCount = new HashMap<Integer, Integer>();
         String[] words = document.split(" ");
         for (int i=0; i<words.length; i++) {
-            String lower = words[i].toLowerCase();
+            String lower = words[i].toLowerCase().trim();
+            lower = lower.replaceAll(" ","");
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
@@ -593,23 +573,19 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
     @Override
     public void loadIndex() throws IOException, ClassNotFoundException {
-        if(indexLoadCount ==1 ) {
+        if(dictionaryLoad) {
             loadDictionaryAndDocuments();
+            dictionaryLoad = false;
         }
-        StringBuilder builder = new StringBuilder(_options._indexPrefix).
-                append(File.separator).append("index"+indexLoadCount+".tsv");
+        StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append("index"+indexLoadCount+".tsv");
         FileInputStream in = new FileInputStream(builder.toString());
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(builder.toString()));
         String line = null;
         int count = 0;
         Integer key = 0;
-        ArrayList<Integer> value = null;
-        List<BitSet> decom = null;
 
-        for(int i=0;i<noOfObjects.get(indexLoadCount-1);i++){
-            decom =  (List<BitSet>) ois.readObject();
-            line = convertDecompress(decom);
+        ArrayList<Integer> value = null;
+        while((line = br.readLine()) != null) {
             List<String> lineList = stringTokenizer(line);
             if(lineList.size() == 1) { // term id read from file
                 // initializing value list for next line
@@ -625,14 +601,17 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 }
             }
         }
-
-
         br.close();
     }
 
-
     public void loadDictionaryAndDocuments() throws IOException {
-        StringBuilder builder = new StringBuilder(_options._indexPrefix).append(File.separator).append("documentsAndDict.tsv");
+        CorpusAnalyzerPagerank c = new CorpusAnalyzerPagerank(new Options("conf/engine.conf"));
+        LogMinerNumviews l = new LogMinerNumviews(new Options("conf/engine.conf"));
+        HashMap<String, Float> _R = (HashMap<String, Float>) c.loadFromFile(_options._indexPrefix + "/pageRank.tsv");
+        HashMap<String, Integer> _N = (HashMap<String, Integer>)l.loadFromFile(_options._indexPrefix + "/numViews.tsv");
+        System.out.println(_R.size());
+        System.out.println(_N.size());
+        StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append("documentsAndDict.tsv");
         FileInputStream in = new FileInputStream(builder.toString());
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
         String line = null;
@@ -650,13 +629,17 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 while (scanner.hasNext()) {
                     int docid = Integer.parseInt(scanner.next());
                     DocumentIndexed documentIndexed = new DocumentIndexed(docid);
-                    documentIndexed.setTitle(scanner.next());
+                    String title = scanner.next();
+                    documentIndexed.setTitle(title);
                     documentIndexed.setUrl(scanner.next());
                     documentIndexed.setNumberOfWords(Long.parseLong(scanner.next()));
+                    documentIndexed.setPageRank(_R.get(title));
+                    documentIndexed.setNumViews(_N.get(title));
                     _documents.put(docid, documentIndexed);
                 }
             } else if(lineList.size() > 1 && lineList.size() <=2){
                 dictionary.put(lineList.get(1), Integer.parseInt(lineList.get(0)));
+                reverseDictionary.put(Integer.parseInt(lineList.get(0)),lineList.get(1));
             }
         }
 
@@ -669,7 +652,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     public void loadToCache(int loadIndex) throws IOException, ClassNotFoundException {
         //Clear before loading into cache again.
         index.clear();
-        indexLoadCount = loadIndex+1;
+        indexLoadCount = loadIndex + 1;
         System.out.println(indexLoadCount+" IndexLoadCount");
         loadIndex();
     }
@@ -678,12 +661,12 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         File indexFolder = new File(_options._indexPrefix);
         File[] listOfFiles = indexFolder.listFiles();
         int noOfFiles = listOfFiles.length-22;
-        if(termId <= noOfFiles * 5000) {
+        if(termId <= noOfFiles * 500) {
             //System.out.println((int) Math.floor(termId / 5000));
             if(index.containsKey(termId)) {
                 return true;
             } else {
-                loadToCache((int) Math.floor(termId / 5000));
+                loadToCache((int) Math.floor(termId / 500));
             }
             //System.out.println(index);
             if(index.containsKey(termId)) {
@@ -694,10 +677,21 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     }
 
     public List<Integer> getTerm(int termId) throws ClassNotFoundException, IOException{
-        if(checkIndexForTerm(termId)) {
-            return index.get(termId);
-        } else {
-            return null;
+        if (cache.containsKey(termId)) {
+            System.out.println("Cache accessed");
+            return cache.get(termId);
+        }
+        else{
+            if(checkIndexForTerm(termId)) {
+                if(cache.size() == 100) {
+                    cache.clear();
+                }
+                System.out.println("Not found in cache");
+                cache.put(termId, index.get(termId));
+                return cache.get(termId);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -777,7 +771,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         }
         // valueList is the list of docIDS for the word.
         List<Integer> docOccLocList = getTerm(termId);
-		/*if(indexLoadCount!=1){
+      /*if(indexLoadCount!=1){
       	docId = -1;
       }*/
         if(docId == -1) {
@@ -800,26 +794,145 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         return -1;
     }
 
-    private DocumentIndexed nextDocForPhrase(Query query, int docid) throws IOException, ClassNotFoundException {/*
+    private DocumentIndexed nextDocForPhrase(Query query, int docid) throws IOException, ClassNotFoundException {
 
-      for (Vector<String> phrase : ((QueryPhrase) query)._phraseTokens) {
-          StringBuffer sb = new StringBuffer();
-          for (String word : phrase) {
-              sb.append(word+" ");
-          }
-          DocumentIndexed phraseDoc = (DocumentIndexed)nextDocForSimple(new Query(sb.toString()), docid);
-          if(phraseDoc == null){
-              return null;
-          }
+        int maxDocId = -1;
+        boolean phrasePresent = true;
+        for (Vector<String> phrase : ((QueryPhrase) query)._phraseTokens) {
+            StringBuffer sb = new StringBuffer();
+            for (String word : phrase) {
+                sb.append(word+" ");
+            }
+            Query q = new Query(sb.toString());
+            q.processQuery();
 
-          int docId = phraseDoc._docid;
+            int docId = nextDocForPhraseHelper(q, docid);
 
-      }
+            if(docId == -1){
+                return null;
+            }
+
+            if (maxDocId < 0) {
+                maxDocId = docId;
+            }
+
+            if (maxDocId != docId) {
+                phrasePresent = false;
+                if (maxDocId < docId) {
+                    maxDocId = docId;
+                }
+            }
+        }
+
+        if (query._tokens.size() != 0) {
+            StringBuffer sb = new StringBuffer();
+            for (String term : ((QueryPhrase) query)._tokens) {
+                sb.append(term+" ");
+            }
+            Query q = new Query(sb.toString());
+            q.processQuery();
+            DocumentIndexed simpleDoc = (DocumentIndexed)nextDocForSimple(q, docid);
+            if(simpleDoc == null){
+                return null;
+            }
+
+            int docId = simpleDoc._docid;
+
+            if (maxDocId < 0) {
+                maxDocId = docId;
+            }
+
+            if (maxDocId != docId) {
+                phrasePresent = false;
+                if (maxDocId < docId) {
+                    maxDocId = docId;
+                }
+            }
+        }
+
+        if(phrasePresent) {
+            return _documents.get(maxDocId);
+        }
+        return nextDocForPhrase(query, maxDocId - 1);
+    }
 
 
+    private int nextDocForPhraseHelper(Query q, int docid) throws IOException, ClassNotFoundException {
 
-	 */
-        return null;
+        boolean phrasePresent = true;
+        DocumentIndexed phraseDoc = (DocumentIndexed)nextDocForSimple(q, docid);
+        if(phraseDoc == null){
+            return -1;
+        }
+
+        int docId = phraseDoc._docid;
+
+        HashSet<Integer> firstTermLocation = new HashSet<Integer>();
+
+        Iterator iterator = q._tokens.iterator();
+        int termId = dictionary.get(iterator.next().toString());
+        List<Integer> docOccLocList = getTerm(termId);
+        int location = 0;
+        for (int i = 0; i < docOccLocList.size(); ) {
+            if (docOccLocList.get(i) == docId) {
+                location = i;
+                break;
+            } else {
+                i = i + docOccLocList.get(i + 1) + 2;
+            }
+        }
+
+
+        for (int i = 0; i < docOccLocList.get(location + 1); i++) {
+            firstTermLocation.add(docOccLocList.get(location + 2 + i));
+        }
+
+        int counter = 1;
+        boolean tokenpresent = false;
+
+        while (iterator.hasNext()) {
+            //counter++;
+            int termId2 = dictionary.get(iterator.next().toString());
+            List<Integer> docOccLocList2 = getTerm(termId2);
+            int location2 = -1;
+            for (int i = 0; i < docOccLocList2.size(); ) {
+                if (docOccLocList2.get(i) == docId) {
+                    location2 = i;
+                    break;
+                } else if (docOccLocList2.get(i) > docId) {
+                    break;
+                }
+                else {
+                    i = i + docOccLocList2.get(i + 1) + 2;
+                }
+            }
+            if (location2 == -1) {
+                return -1;
+            }
+
+            for (int i = 0; i < docOccLocList2.get(location2 + 1); i++) {
+                if (firstTermLocation.contains(docOccLocList2.get(location2 + 2 + i) - counter)) {
+                    tokenpresent=true;
+                    break;
+                }
+            }
+
+            counter++;
+            if (tokenpresent) {
+                tokenpresent = false;
+            } else {
+                phrasePresent = false;
+                break;
+            }
+        }
+
+        if (phrasePresent) {
+            return docId;
+        }
+        else {
+            return nextDocForPhraseHelper(q, docId);
+        }
+
     }
 
     @Override
@@ -828,8 +941,8 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         if (dictionary.containsKey(term)) {
             int termid = dictionary.get(term);
             try {
-                if (index.containsKey(termid) || checkIndexForTerm(termid)) {
-                    List<Integer> occurrence = index.get(termid);
+                if (cache.containsKey(termid) || checkIndexForTerm(termid)) {
+                    List<Integer> occurrence = getTerm(termid);
                     int documentCount = 0;
                     int i=0;
                     while (i < occurrence.size()) {
@@ -854,8 +967,8 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         if (dictionary.containsKey(term)) {
             int termid = dictionary.get(term);
             try {
-                if (checkIndexForTerm(termid)) {
-                    List<Integer> occurrence = index.get(termid);
+                if (cache.containsKey(termid) || checkIndexForTerm(termid)) {
+                    List<Integer> occurrence = getTerm(termid);
                     int corpusTermFreq = 0;
                     int i=0;
                     while (i < occurrence.size()) {
@@ -890,8 +1003,8 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         if (dictionary.containsKey(term)) {
             int termid = dictionary.get(term);
             try {
-                if (index.containsKey(termid) || checkIndexForTerm(termid)) {
-                    List<Integer> occurrence = index.get(termid);
+                if (cache.containsKey(termid) || checkIndexForTerm(termid)) {
+                    List<Integer> occurrence = getTerm(termid);
                     int docTermFreq = 0;
                     int i = 0;
                     while (i < occurrence.size()) {
@@ -927,7 +1040,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 i = (doc / 500) + 1;
             }
 
-            StringBuilder builder = new StringBuilder(_options._indexPrefix).append(File.separator).append(i+"DocTermMap.tsv");
+            StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append(i+"DocTermMap.tsv");
             FileInputStream in = null;
             try {
                 in = new FileInputStream(builder.toString());
@@ -936,11 +1049,13 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
                 while ((line = br.readLine()) != null) {
                     ArrayList<Integer> valueList = new ArrayList<Integer>();
-                    String[] keyValue = line.split("-->");
-                    int docId = Integer.parseInt(keyValue[0]);
-                    String[] values = keyValue[1].split("\t");
-                    for (String value : values) {
-                        valueList.add(Integer.parseInt(value));
+                    Scanner keyValue = new Scanner(line).useDelimiter("-->");//line.split("-->");
+                    int docId = Integer.parseInt(keyValue.next());
+                    if(keyValue.hasNext()) {
+                        String[] values = keyValue.next().split("\t");
+                        for (String value : values) {
+                            valueList.add(Integer.parseInt(value));
+                        }
                     }
                     documentTermMap.put(docId, valueList);
                 }
@@ -953,137 +1068,23 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         return null;
     }
 
-
-    public static List<Integer> decompress(List<BitSet> listOfBitSet) throws UnsupportedEncodingException{
-        List<Integer> listOfNum = new ArrayList<Integer>();
-        for (BitSet data : listOfBitSet ) {
-            int num=0;
-
-            StringBuilder dataSB = null;
-            for(int i=0; i<data.length();i++){
-                dataSB.append(data.get(i));
-            }
-
-            long strVal = Long.parseLong(dataSB.toString());
-
-            if(strVal <= 11111111){
-                listOfNum.add(Integer.parseInt(dataSB.substring(1), 2));
-                continue;
-            }
-            StringBuilder sb = new StringBuilder();
-            for(int i=0;i<dataSB.length();i+=8){
-                String temp = dataSB.substring(i+1,i+8);
-                sb.append(temp);
-            }
-            num = Integer.parseInt(sb.toString(),2);
-            listOfNum.add(num);
-        }
-        return listOfNum;
+    @Override
+    public String getTermName(int termId) {
+        return reverseDictionary.get(termId);
     }
-
-    public static List<BitSet> compress(List<Integer> listOfNumbers) throws UnsupportedEncodingException{
-
-        List<byte []> listOfByte = new ArrayList<byte[]>();
-        List<BitSet> listOfBitSet = new ArrayList<BitSet>();
-        BitSet eachCompressed = new BitSet();
-        for (int num : listOfNumbers) {
-            String binaryrep = Integer.toBinaryString(new Integer(num));
-            byte[] data = new byte[binaryrep.length()/2];
-            List<String> midBinary = new ArrayList<String>();
-            if(num<128){
-                StringBuilder construct = new StringBuilder();
-                construct.append("1");
-                construct.append(binaryrep);
-                midBinary.add(construct.toString());
-                data = midBinary.get(0).getBytes();
-                // set bitset
-                char[] dataChar = midBinary.get(0).toCharArray();
-                for(int i=0;i<dataChar.length;i++){
-                    if(dataChar[i]=='1'){
-                        // do something
-                        eachCompressed.set(i);
-                    }
-                }
-            }
-            else{
-                StringBuilder construct = new StringBuilder();
-                construct.append("1");
-                construct.append(binaryrep.substring(binaryrep.length()-7, binaryrep.length()));
-                midBinary.add(construct.toString());
-                int remaininglength = binaryrep.length()-7;
-                int count=1;
-                while(remaininglength > 7){
-                    count++;
-                    StringBuilder constructInside = new StringBuilder();
-                    constructInside.append("0");
-                    constructInside.append(binaryrep.substring(binaryrep.length()-(7*count),
-                            binaryrep.length()-(7*(count-1))));
-                    midBinary.add(constructInside.toString());
-                    remaininglength -= 7;
-                }
-                StringBuilder lp = new StringBuilder();
-                for(int i=0;i<8-remaininglength;i++){
-                    lp.append("0");
-                }
-
-                lp.append(binaryrep.substring(0,remaininglength));
-                midBinary.add(lp.toString());
-                Collections.reverse(midBinary);
-
-                StringBuilder str = new StringBuilder();
-                for(int i=0;i<midBinary.size();i++){
-                    str.append(midBinary.get(i));
-                }
-                data = str.toString().getBytes();
-                char[] dataChar = str.toString().toCharArray();
-                for(int i=0;i<dataChar.length;i++){
-                    if(dataChar[i]=='1'){
-                        // do something
-                        eachCompressed.set(i);
-                    }
-                }
-            }
-            listOfByte.add(data);
-            listOfBitSet.add(eachCompressed);
-            eachCompressed = new BitSet();
-        }
-        return listOfBitSet;
-    }
-
-    private static List<BitSet> convertCompress(String line) throws UnsupportedEncodingException {
-        List<Integer> tokenList = new ArrayList<Integer>();
-        StringTokenizer st = new StringTokenizer(line, "\t");
-        while (st.hasMoreElements()) {
-            tokenList.add(Integer.parseInt(st.nextElement().toString()));
-        }
-        return compress(tokenList);
-    }
-
-    private static String convertDecompress(List<BitSet> line) throws UnsupportedEncodingException {
-        List<Integer> result = new ArrayList<Integer>();
-        result = decompress(line);
-        StringBuilder sb = new StringBuilder();
-        for(int i=0;i<result.size();i++){
-            sb.append(result.get(i));
-            sb.append("\t");
-        }
-        return sb.toString();
-    }
-
 
     public static void main(String args[]) {
         try {
             IndexerInvertedCompressed ind = new IndexerInvertedCompressed(new Options("conf/engine.conf"));
             ind.loadIndex();
-			/*int termId = ind.dictionary.get("mousette");
-          System.out.println(termId);
-
-          //System.out.println(ind.index.get(1711131));
-          boolean result = ind.checkIndexForTerm(termId);
-          System.out.println(result);*/
+            Set<Entry<String, Integer>> dictSet = ind.dictionary.entrySet();
+            for(Entry e : dictSet) {
+                if(Integer.parseInt(e.getValue().toString()) <= 5000 ) {
+                    System.out.println(e.getValue()+ " " + e.getKey());
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
-

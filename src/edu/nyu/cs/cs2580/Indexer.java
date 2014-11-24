@@ -1,6 +1,7 @@
 package edu.nyu.cs.cs2580;
 
 import java.io.IOException;
+import java.util.List;
 
 import edu.nyu.cs.cs2580.SearchEngine.Options;
 
@@ -118,6 +119,10 @@ public abstract class Indexer {
 
     // Number of times {@code term} appeared in the document {@code url}.
     public abstract int documentTermFrequency(String term, String url);
+
+    public abstract List<Integer> getTopTerms(int doc, int m);
+
+    public abstract String getTermName(int termId);
 
     /**
      * All Indexers must be created through this factory class based on the

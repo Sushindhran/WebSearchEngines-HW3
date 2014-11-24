@@ -32,7 +32,10 @@ public class QueryPhrase extends Query {
             Scanner s2 = new Scanner(token);
             while (s2.hasNext()) {
                 String word = HtmlParser.cleanString(s2.next()).toLowerCase();
-                temp.add(PorterStemming.getStemmedWord(word));
+                Vector<String> stopWords = new StopWords().getStopWords();
+                if(!stopWords.contains(word)) {
+                    temp.add(PorterStemming.getStemmedWord(word));
+                }
             }
             _phraseTokens.add(temp);
 
@@ -43,7 +46,10 @@ public class QueryPhrase extends Query {
         Scanner s3 = new Scanner(_query);
         while (s3.hasNext()) {
             String word = HtmlParser.cleanString(s3.next()).toLowerCase();
-            _tokens.add(PorterStemming.getStemmedWord(word));
+            Vector<String> stopWords = new StopWords().getStopWords();
+            if(!stopWords.contains(word)) {
+                _tokens.add(PorterStemming.getStemmedWord(word));
+            }
         }
         s3.close();
     }

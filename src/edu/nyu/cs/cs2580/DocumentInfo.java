@@ -6,7 +6,7 @@ class DocumentInfo {
     }
     public String name;
     public int nv = 0;
-    public Double pr = 0.0;
-    public Double p = 0.0;
-    public Double n = 0.0;
+    public Float pr = 0.0f;
+    public Float p = 0.0f;
+    public Float n = 0.0f;
 }

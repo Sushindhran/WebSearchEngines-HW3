@@ -727,4 +727,14 @@ public class IndexerInvertedDoconly extends Indexer implements Serializable{
         }
         return  0;
     }
+
+    @Override
+    public List<Integer> getTopTerms(int doc, int m) {
+        return null;
+    }
+
+    @Override
+    public String getTermName(int termId) {
+        return null;
+    }
 }
