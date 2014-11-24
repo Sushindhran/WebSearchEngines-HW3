@@ -62,9 +62,7 @@ package edu.nyu.cs.cs2580;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 import java.util.Vector;
 
@@ -138,7 +136,7 @@ public class HtmlParser {
         sentence=sentence.replaceAll("\\)", "").trim();
         sentence=sentence.replaceAll("\\(", "").trim();
         sentence=sentence.replaceAll(".\\[", " \\[").trim();
-        sentence=sentence.replaceAll("\\[.*\\]","").trim();
+        sentence=sentence.replaceAll("\\[(.*?)\\]", "").trim();
         sentence=sentence.replaceAll("\\. ", " ").trim();
         sentence=sentence.replaceAll("<", "").trim();
         sentence=sentence.replaceAll(">", "").trim();
@@ -147,6 +145,26 @@ public class HtmlParser {
         sentence=sentence.replaceAll("\\*", "").trim();
         sentence=sentence.replaceAll("\\s+", " ").trim();
         return sentence;
+    }
+
+    public static boolean checkIfRedirect(String filename) {
+        File f = new File(filename);
+        try {
+            FileReader filereader = new FileReader(f);
+            BufferedReader bufferedreader = new BufferedReader(filereader);
+            int count = 0;
+            while(bufferedreader.readLine() != null) {
+                count++;
+            }
+
+            if(count<20) {
+                return true;
+            }
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public static void main(String args[]) {

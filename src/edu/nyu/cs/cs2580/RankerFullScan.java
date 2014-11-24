@@ -1,6 +1,8 @@
 package edu.nyu.cs.cs2580;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 import edu.nyu.cs.cs2580.QueryHandler.CgiArguments;
@@ -35,7 +37,12 @@ class RankerFullScan extends Ranker {
     return results;
   }
 
-  private ScoredDocument scoreDocument(Query query, int did) {
+    @Override
+    public HashMap<String, Double> pseudoRelevanceFeedback(List<ScoredDocument> scoredDocuments, int m) {
+        return null;
+    }
+
+    private ScoredDocument scoreDocument(Query query, int did) {
     // Process the raw query into tokens.
     query.processQuery();
 

@@ -1,9 +1,11 @@
 package edu.nyu.cs.cs2580;
 
-import java.util.Vector;
-
 import edu.nyu.cs.cs2580.QueryHandler.CgiArguments;
 import edu.nyu.cs.cs2580.SearchEngine.Options;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * This is the abstract Ranker class for all concrete Ranker implementations.
@@ -52,6 +54,8 @@ public abstract class Ranker {
    * @return Up to {@code numResults} scored documents in ranked order
    */
   public abstract Vector<ScoredDocument> runQuery(Query query, int numResults);
+
+  public abstract HashMap<String, Double> pseudoRelevanceFeedback(List<ScoredDocument> scoredDocuments, int m);
 
   /**
    * All Rankers must be created through this factory class based on the

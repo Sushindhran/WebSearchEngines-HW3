@@ -28,7 +28,10 @@ public class Query {
         Scanner s = new Scanner(_query);
         while (s.hasNext()) {
             String word = HtmlParser.cleanString(s.next()).toLowerCase();
-            _tokens.add(word);
+            Vector<String> stopWords = new StopWords().getStopWords();
+            if(!stopWords.contains(word)) {
+                _tokens.add(PorterStemming.getStemmedWord(word));
+            }
         }
         s.close();
     }

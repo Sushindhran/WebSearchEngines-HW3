@@ -1,13 +1,13 @@
 package edu.nyu.cs.cs2580;
 
+import edu.nyu.cs.cs2580.SearchEngine.Options;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import edu.nyu.cs.cs2580.SearchEngine.Options;
 
 /**
  * This is the abstract CorpusAnalyzer class for all concrete CorpusAnalyzer

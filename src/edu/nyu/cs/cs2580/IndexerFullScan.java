@@ -214,7 +214,17 @@ class IndexerFullScan extends Indexer implements Serializable {
     return 0;
   }
 
-  ///// Utility
+    @Override
+    public List<Integer> getTopTerms(int doc, int m) {
+        return null;
+    }
+
+    @Override
+    public String getTermName(int termId) {
+        return null;
+    }
+
+    ///// Utility
 
   public Vector<String> getTermVector(Vector<Integer> tokens) {
     Vector<String> retval = new Vector<String>();

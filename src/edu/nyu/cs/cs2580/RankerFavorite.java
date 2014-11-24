@@ -4,10 +4,7 @@ import edu.nyu.cs.cs2580.QueryHandler.CgiArguments;
 import edu.nyu.cs.cs2580.SearchEngine.Options;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * @CS2580: Implement this class for HW2 based on a refactoring of your favorite
@@ -100,5 +97,69 @@ public class RankerFavorite extends Ranker {
         score += (Math.log(pageRank)/Math.log(2));
         score += (Math.log(numviews)/Math.log(2));
         return new ScoredDocument(d, Math.pow(2, score));
+    }
+
+    public HashMap<String, Double> pseudoRelevanceFeedback(List<ScoredDocument> results, int numTerms) {
+        Map<Integer, Double> finalAns = new HashMap<Integer, Double>();
+        Map<Integer, Integer> temp = new HashMap<Integer, Integer>();
+
+
+        Map<Integer, List<Integer>> topTerms = new HashMap<Integer, List<Integer>>();
+
+        for (ScoredDocument document : results) {
+            int docid = document.getDocId();
+            topTerms.put(docid, _indexer.getTopTerms(docid, numTerms));
+        }
+
+        int denominator = 0;
+
+        for (int docId : topTerms.keySet()) {
+            List<Integer> listOfTerms = topTerms.get(docId);
+            for (int i =0; i< listOfTerms.size(); i=i+2) {
+                if (!temp.containsKey(listOfTerms.get(i))) {
+                    temp.put(listOfTerms.get(i), listOfTerms.get(i+1));
+                }
+                else {
+                    temp.put(listOfTerms.get(i), temp.get(listOfTerms.get(i)) + listOfTerms.get(i+1));
+                }
+            }
+        }
+
+
+        List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>(temp.entrySet());
+        Collections.sort( list, new Comparator<Map.Entry<Integer, Integer>>()
+        {
+            @Override
+            public int compare( Map.Entry<Integer, Integer> o1, Map.Entry<Integer, Integer> o2 )
+            {
+                return (o2.getValue()).compareTo(o1.getValue());
+            }
+        } );
+
+        List <Map.Entry<Integer, Integer>> sublist = list.subList(0,numTerms);
+        temp.clear();
+
+        for (Map.Entry<Integer, Integer> term : sublist) {
+            int numerator = 0;
+            for (ScoredDocument document : results) {
+                numerator= numerator + _indexer.documentTermFrequency(_indexer.getTermName(term.getKey()),document.getDocURL());
+            }
+            temp.put(term.getKey(), numerator);
+        }
+
+        for (int term : temp.keySet()) {
+            denominator=denominator +  temp.get(term);
+        }
+
+        for (int term : temp.keySet()) {
+            finalAns.put(term, (temp.get(term) * 1.0)/denominator);
+        }
+
+        HashMap<String, Double> returnMap = new HashMap<String, Double>();
+        for (int term : finalAns.keySet()) {
+            returnMap.put(_indexer.getTermName(term), finalAns.get(term));
+        }
+
+        return returnMap;
     }
 }

@@ -3,11 +3,11 @@ package edu.nyu.cs.cs2580;
 import java.io.IOException;
 import java.util.*;
 
-
+@SuppressWarnings("unchecked")
 public class Spearman {
     private static Vector<DocumentInfo> docInfos = new Vector<DocumentInfo>();
 
-    private static void buildM(Map<String,Double> pageRanks,Map<String,Integer> numViews) {
+    private static void build(Map<String,Float> pageRanks,Map<String,Integer> numViews) {
         Map<String, DocumentInfo> infosM = new HashMap<String, DocumentInfo>();
 
         Iterator it = pageRanks.entrySet().iterator();
@@ -17,7 +17,7 @@ public class Spearman {
             name = (String) pairs.getKey();
             if (infosM.get(name)==null) {
                 DocumentInfo di = new DocumentInfo(name);
-                di.pr = (Double) pairs.getValue();
+                di.pr = (Float) pairs.getValue();
                 infosM.put(name,di);
             }
         }
@@ -37,7 +37,6 @@ public class Spearman {
         it = infosM.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pairs = (Map.Entry)it.next();
-            name = (String) pairs.getKey();
             DocumentInfo di = (DocumentInfo) pairs.getValue();
             docInfos.add(di);
         }
@@ -47,9 +46,9 @@ public class Spearman {
         SearchEngine.Options opt = new SearchEngine.Options("conf/engine.conf");
         CorpusAnalyzer analyzer = CorpusAnalyzer.Factory.getCorpusAnalyzerByOption(opt);
         LogMiner miner = LogMiner.Factory.getLogMinerByOption(opt);
-        Map<String,Double> rankScores = (HashMap<String,Double>) ((CorpusAnalyzerPagerank)analyzer).loadFromFile(pageRankPath);
+        Map<String,Float> rankScores = (HashMap<String,Float>) ((CorpusAnalyzerPagerank)analyzer).loadFromFile(pageRankPath);
         Map<String,Integer> numViews = (HashMap<String,Integer>) ((LogMinerNumviews)miner).loadFromFile(numViewPath);
-        buildM(rankScores, numViews);
+        build(rankScores, numViews);
     }
 
     private static void compute() {
@@ -71,14 +70,14 @@ public class Spearman {
         Collections.sort(docInfos, new pageRankComparator());
 
         for (int i = 0; i < docInfos.size(); i++) {
-            docInfos.get(i).p = (double) i + 1;
+            docInfos.get(i).p = (float) i + 1;
         }
     }
 
     private static void calculateN() {
         Collections.sort(docInfos, new numViewComparator());
         for (int i = 0; i < docInfos.size(); i++)
-            docInfos.get(i).n = (double) i + 1;
+            docInfos.get(i).n = (float) i + 1;
     }
 
     public static class pageRankComparator implements Comparator<DocumentInfo> {
@@ -104,7 +103,7 @@ public class Spearman {
     }
 
     public static void main (String [] args) throws IOException{
-        Spearman.load("data/index/pageRank.tsv", "data/index/numViews.tsv");
+        Spearman.load(args[0], args[1]);
         Spearman.compute();
     }
 }

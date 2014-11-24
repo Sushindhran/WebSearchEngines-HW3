@@ -4,10 +4,7 @@ import edu.nyu.cs.cs2580.QueryHandler.CgiArguments;
 import edu.nyu.cs.cs2580.SearchEngine.Options;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Instructors' code for illustration purpose. Non-tested code.
@@ -49,4 +46,9 @@ public class RankerConjunctive extends Ranker {
     Collections.sort(results, Collections.reverseOrder());
     return results;
   }
+
+    @Override
+    public HashMap<String, Double> pseudoRelevanceFeedback(List<ScoredDocument> scoredDocuments, int m) {
+        return null;
+    }
 }
