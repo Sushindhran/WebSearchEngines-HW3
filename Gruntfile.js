@@ -33,6 +33,8 @@ module.exports = function gruntFile(grunt) {
         }
     });
 
+    grunt.loadNpmTasks('grunt-shell-spawn');
+
     grunt.registerTask('compile', [
         'shell:compile'
     ]);
@@ -41,11 +43,11 @@ module.exports = function gruntFile(grunt) {
        'shell:serve'
     ]);
 
-    grunt.registerTask('serve', [
+    grunt.registerTask('mine', [
         'shell:mine'
     ]);
 
-    grunt.registerTask('serve', [
+    grunt.registerTask('index', [
         'shell:index'
     ]);
 };
