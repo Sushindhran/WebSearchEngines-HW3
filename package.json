@@ -15,6 +15,7 @@
     },
 
     "devDependencies": {
-        "grunt-shell-spawn": "0.3.0"
+        "grunt-shell-spawn": "0.3.0",
+        "grunt-open": "0.2.3"
     }
 }

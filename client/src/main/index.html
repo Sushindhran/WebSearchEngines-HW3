@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="WebSearchEngines">
+<html ng-app="websearchengines">
 <head>
     <meta charset="utf-8" />
 
@@ -16,14 +16,14 @@
 
 <div ng-view></div>
 
-<script src="lib/angular/angular.js"></script>
-<script src="lib/underscore/underscore-min.js"></script>
-<script src="lib/jquery/jquery.js"></script>
-<script src="lib/angular-route/angular-route.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.12/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.12/angular-route.js"></script>
 
 <script src="application/application.js"></script>
 <script src="application/constants/configuration.js"></script>
-<script type="text/javascript" src="application/directives/auto-complete.js"></script>
+<script src="application/directives/auto-complete.js"></script>
+<script src="application/directives/suggestion.js"></script>
+<script src="application/filters/highlight.js"></script>
 <script src="application/service/search-service.js"></script>
 <script src="application/view/search-ctrl.js"></script>
 

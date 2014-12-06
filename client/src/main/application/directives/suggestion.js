@@ -1,4 +1,4 @@
-WebSearchEngines.Directives.directive('directives.suggestion', function(){
+WebSearchEngines.Directives.directive('suggestion', function(){
     return {
         restrict: 'A',
         require: '^autocomplete', // ^look for controller on parents element

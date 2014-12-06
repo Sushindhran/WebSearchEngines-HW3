@@ -1,4 +1,4 @@
-WebSearchEngines.Directives.directive('directive.autoComplete', function() {
+WebSearchEngines.Directives.directive('autocomplete', function() {
     var index = -1;
 
     return {
@@ -256,4 +256,3 @@ WebSearchEngines.Directives.directive('directive.autoComplete', function() {
         </div>'
     };
 });
-

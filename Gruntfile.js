@@ -1,5 +1,7 @@
 'use strict';
 
+var path = require('path');
+
 module.exports = function gruntFile(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
@@ -30,10 +32,18 @@ module.exports = function gruntFile(grunt) {
                     async: false
                 }
             }
+        },
+
+        open : {
+            search: {
+                app: 'Google Chrome',
+                path: path.resolve('client/src/main/index.html')
+            }
         }
     });
 
     grunt.loadNpmTasks('grunt-shell-spawn');
+    grunt.loadNpmTasks('grunt-open');
 
     grunt.registerTask('compile', [
         'shell:compile'

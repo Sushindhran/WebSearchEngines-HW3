@@ -159,7 +159,7 @@ div{
 }
 
 body{
-    background: url('../sprinkles.png') repeat;
+    background: url('../images/bg.jpg');
 }
 .main{
     display: inline-block;

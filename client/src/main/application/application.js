@@ -28,13 +28,13 @@ angular.module(
         '$routeProvider',
         function($routeProvider) {
 
-            //Routes to game.html for /search
+            //Routes to search.html for /search
             $routeProvider.when('/search', {
-                templateUrl: '/WebSearchEngines/src/main/application/view/search.html'
+                templateUrl: '/HW3/client/src/main/application/view/search.html'
             });
 
-            //Defaults to game.html if it doesn't match any route
-            $routeProvider.otherwise({ templateUrl: '/WebSearchEngines/src/main/application/view/search.html' });
+            //Defaults to search.html if it doesn't match any route
+            $routeProvider.otherwise({ templateUrl: '/HW3/client/src/main/application/view/search.html' });
         }
     ]
 );

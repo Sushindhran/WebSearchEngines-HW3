@@ -1,8 +1,8 @@
 //Game controller that contains some of the game logic and UI
-TicTacToe.Controllers.controller('view.SearchController',
-    ['$scope', 'constants.Configuration', 'services.SearchService',
-        function ($scope, configuration, searchService) {
-            $scope.suggestions = searchService.getmovies("...");
+WebSearchEngines.Controllers.controller('view.SearchController',
+    ['$scope', 'services.SearchService',
+        function ($scope, searchService) {
+            $scope.suggestions = searchService.getSuggestions("...");
             $scope.suggestions.then(function(data){
                 $scope.suggestions = data;
             });
@@ -13,8 +13,8 @@ TicTacToe.Controllers.controller('view.SearchController',
 
             $scope.doSomething = function(typedthings){
                 console.log("Do something like reload data with this: " + typedthings );
-                $scope.newmovies = searchService.getmovies(typedthings);
-                $scope.newmovies.then(function(data){
+                $scope.queries = searchService.getSuggestions(typedthings);
+                $scope.queries.then(function(data){
                     $scope.suggestions = data;
                 });
             }

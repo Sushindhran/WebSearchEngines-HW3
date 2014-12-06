@@ -1,4 +1,4 @@
-WebSearchEngines.Filters.filter('filters.highlight', ['$sce', function ($sce) {
+WebSearchEngines.Filters.filter('highlight', ['$sce', function ($sce) {
     return function (input, searchParam) {
         if (typeof input === 'function') return '';
         if (searchParam) {
