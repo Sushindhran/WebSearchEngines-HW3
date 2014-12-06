@@ -1,6 +1,8 @@
 WebSearchEngines-HW3
 ====================
 
+Works only on Unix machines
+
 1) Clone the repo
 
 2) npm install in the project directory

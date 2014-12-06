@@ -28,7 +28,7 @@ angular.module(
         '$routeProvider',
         function($routeProvider) {
 
-            //Routes to game.html for /play
+            //Routes to game.html for /search
             $routeProvider.when('/search', {
                 templateUrl: '/WebSearchEngines/src/main/application/view/search.html'
             });
