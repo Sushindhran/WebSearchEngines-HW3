@@ -1,17 +1,15 @@
 package edu.nyu.cs.cs2580;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
-
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-
 import edu.nyu.cs.cs2580.SearchEngine.Options;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * Handles each incoming query, students do not need to change this class except
@@ -109,23 +107,35 @@ class QueryHandler implements HttpHandler {
         _indexer = indexer;
     }
 
-    private void respondWithMsg(HttpExchange exchange, final String message)
+    private void respondWithMsg(HttpExchange exchange, final String message, CgiArguments.OutputFormat format)
             throws IOException {
         Headers responseHeaders = exchange.getResponseHeaders();
-        responseHeaders.set("Content-Type", "text/plain");
+        if(format == CgiArguments.OutputFormat.HTML) {
+            responseHeaders.set("Content-Type", "text/html");
+        } else {
+            responseHeaders.set("Content-Type", "text/plain");
+        }
         exchange.sendResponseHeaders(200, 0); // arbitrary number of bytes
         OutputStream responseBody = exchange.getResponseBody();
         responseBody.write(message.getBytes());
         responseBody.close();
     }
 
-    private void constructTextOutput(
-            final Vector<ScoredDocument> docs, StringBuffer response) {
+    private void constructTextOutput(final Vector<ScoredDocument> docs, StringBuffer response) {
         for (ScoredDocument doc : docs) {
             response.append(response.length() > 0 ? "\n" : "");
             response.append(doc.asTextResult());
         }
         response.append(response.length() > 0 ? "\n" : "");
+    }
+
+    private void constructHtmlOutput(final Vector<ScoredDocument> docs, StringBuffer response) {
+        response.append("<html>\n<body>\n");
+        for (ScoredDocument doc : docs) {
+            response.append(response.length() > 0 ? "\n" : "");
+            response.append(doc.asHtmlResult());
+        }
+        response.append("</body>\n</html>\n");
     }
 
     public void handle(HttpExchange exchange) throws IOException {
@@ -146,17 +156,17 @@ class QueryHandler implements HttpHandler {
         String uriQuery = exchange.getRequestURI().getQuery();
         String uriPath = exchange.getRequestURI().getPath();
         if (uriPath == null || uriQuery == null) {
-            respondWithMsg(exchange, "Something wrong with the URI!");
+            respondWithMsg(exchange, "Something wrong with the URI!", null);
         }
         if (!uriPath.equals("/search") && !uriPath.equals("/prf")) {
-            respondWithMsg(exchange, "Only /search is handled!");
+            respondWithMsg(exchange, "Only /search is handled!", null);
         }
         System.out.println("Query: " + uriQuery);
 
         // Process the CGI arguments.
         CgiArguments cgiArgs = new CgiArguments(uriQuery);
         if (cgiArgs._query.isEmpty()) {
-            respondWithMsg(exchange, "No query is given!");
+            respondWithMsg(exchange, "No query is given!", null);
         }
 
         // Create the ranker.
@@ -164,7 +174,7 @@ class QueryHandler implements HttpHandler {
                 cgiArgs, SearchEngine.OPTIONS, _indexer);
         if (ranker == null) {
             respondWithMsg(exchange,
-                    "Ranker " + cgiArgs._rankerType.toString() + " is not valid!");
+                    "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
         }
 
         // Processing the query.
@@ -183,11 +193,12 @@ class QueryHandler implements HttpHandler {
                     break;
                 case HTML:
                     // @CS2580: Plug in your HTML output
+                    constructHtmlOutput(scoredDocs, response);
                     break;
                 default:
                     // nothing
             }
-            respondWithMsg(exchange, response.toString());
+            respondWithMsg(exchange, response.toString(), cgiArgs._outputFormat);
             System.out.println("Finished query: " + cgiArgs._query);
         }
 
@@ -207,7 +218,7 @@ class QueryHandler implements HttpHandler {
                 buf.append(prf.get(term)).append("\n");
             }
 
-            respondWithMsg(exchange, buf.toString());
+            respondWithMsg(exchange, buf.toString(), null);
         }
 
     }

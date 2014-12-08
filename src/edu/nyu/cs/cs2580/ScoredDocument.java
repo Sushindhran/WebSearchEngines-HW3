@@ -31,7 +31,20 @@ class ScoredDocument implements Comparable<ScoredDocument> {
      * @CS2580: Student should implement {@code asHtmlResult} for final project.
      */
     public String asHtmlResult() {
-        return "";
+        String template="<p><a href=URL>TITLE</a>RANK</p>";
+        Integer docId = _doc._docid;
+        String title = _doc.getTitle();
+        Double score = _score;
+        Double pageRank = _pagerank;
+        Integer numdocs = _numdocs;
+        StringBuffer buf = new StringBuffer();
+        String url="url?"+"&did="+Integer.toHexString(docId);
+        String line;
+        line=template.replace("URL", url);
+        line = line.replace("TITLE", title);
+        line = line.replace("RANK", "\t" + Double.toString(score));
+        buf.append(line);
+        return buf.toString();
     }
 
     @Override
