@@ -1,10 +1,10 @@
 package edu.nyu.cs.cs2580;
 
-import java.io.IOException;
-import java.util.*;
-
 import edu.nyu.cs.cs2580.QueryHandler.CgiArguments;
 import edu.nyu.cs.cs2580.SearchEngine.Options;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @CS2580: Implement this class for HW3 based on your {@code RankerFavorite}
@@ -26,7 +26,6 @@ public class RankerComprehensive extends Ranker {
         int docId = -1;
         Vector<ScoredDocument> results = new Vector<ScoredDocument>();
         Queue<ScoredDocument> retrieval_results = new PriorityQueue<ScoredDocument>(numResults);
-        System.out.println("Inside runQuery");
         try {
             while ((doc = _indexer.nextDoc(query, docId)) != null) {
                 retrieval_results.add(runqueryQL(query, doc._docid));
@@ -46,7 +45,6 @@ public class RankerComprehensive extends Ranker {
             results.add(scoredDoc);
         }
         Collections.sort(results, Collections.reverseOrder());
-        System.out.println("Results " + results);
         return results;
     }
 

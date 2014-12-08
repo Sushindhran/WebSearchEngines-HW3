@@ -7,6 +7,8 @@ import edu.nyu.cs.cs2580.SearchEngine.Options;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
@@ -36,6 +38,8 @@ class QueryHandler implements HttpHandler {
         public int numterms;
 
         public int numdocs;
+
+        public int did;
 
         // The type of the ranker we will be using.
         public enum RankerType {
@@ -93,6 +97,8 @@ class QueryHandler implements HttpHandler {
                 }
                 else if (key.equals("numterms")) {
                     numterms=Integer.parseInt(val);
+                } else if (key.equals("did")) {
+                    did = Integer.parseInt(val);
                 }
             }  // End of iterating over params
         }
@@ -115,6 +121,7 @@ class QueryHandler implements HttpHandler {
         } else {
             responseHeaders.set("Content-Type", "text/plain");
         }
+        responseHeaders.add("Access-Control-Allow-Origin", "*");
         exchange.sendResponseHeaders(200, 0); // arbitrary number of bytes
         OutputStream responseBody = exchange.getResponseBody();
         responseBody.write(message.getBytes());
@@ -155,35 +162,40 @@ class QueryHandler implements HttpHandler {
         // Validate the incoming request.
         String uriQuery = exchange.getRequestURI().getQuery();
         String uriPath = exchange.getRequestURI().getPath();
-        if (uriPath == null || uriQuery == null) {
-            respondWithMsg(exchange, "Something wrong with the URI!", null);
+
+        if (uriPath == null || (!uriPath.equals("/favicon.ico") && uriQuery == null)) {
+            respondWithMsg(exchange, " Something wrong with the URI!", null);
         }
-        if (!uriPath.equals("/search") && !uriPath.equals("/prf")) {
-            respondWithMsg(exchange, "Only /search is handled!", null);
+
+        if (!uriPath.equals("/search") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
+            respondWithMsg(exchange, " "+ uriPath + " is not handled!", null);
         }
-        System.out.println("Query: " + uriQuery);
 
         // Process the CGI arguments.
         CgiArguments cgiArgs = new CgiArguments(uriQuery);
-        if (cgiArgs._query.isEmpty()) {
+        if (uriPath.equals("/search") && cgiArgs._query.isEmpty()) {
             respondWithMsg(exchange, "No query is given!", null);
         }
 
-        // Create the ranker.
-        Ranker ranker = Ranker.Factory.getRankerByArguments(
-                cgiArgs, SearchEngine.OPTIONS, _indexer);
-        if (ranker == null) {
-            respondWithMsg(exchange,
-                    "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
+        Ranker ranker = null;
+        Vector<ScoredDocument> scoredDocs = null;
+
+        if(uriPath.equals("/search")) {
+            // Create the ranker.
+            ranker = Ranker.Factory.getRankerByArguments(
+                    cgiArgs, SearchEngine.OPTIONS, _indexer);
+            if (ranker == null) {
+                respondWithMsg(exchange,
+                        "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
+            }
+            QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query);
+            processedQuery.processQuery();
+
+            // Ranking.
+            scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
+
         }
-
         // Processing the query.
-        QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query);
-        processedQuery.processQuery();
-
-        // Ranking.
-        Vector<ScoredDocument> scoredDocs =
-                ranker.runQuery(processedQuery, cgiArgs._numResults);
 
         if (uriPath.equals("/search")) {
             StringBuffer response = new StringBuffer();
@@ -192,17 +204,22 @@ class QueryHandler implements HttpHandler {
                     constructTextOutput(scoredDocs, response);
                     break;
                 case HTML:
-                    // @CS2580: Plug in your HTML output
                     constructHtmlOutput(scoredDocs, response);
                     break;
                 default:
                     // nothing
             }
             respondWithMsg(exchange, response.toString(), cgiArgs._outputFormat);
-            System.out.println("Finished query: " + cgiArgs._query);
+        } else if(uriPath.equals("/url")) {
+            System.out.println("In here");
+            int docId = cgiArgs.did;
+            Document d = _indexer.getDoc(docId);
+            String filename = d.getTitle();
+            String content = new String(Files.readAllBytes(Paths.get(_indexer._options._corpusPrefix+"/"+filename)));
+            respondWithMsg(exchange, content, CgiArguments.OutputFormat.HTML);
         }
 
-        else {
+        else if(uriPath.equals("/prf")) {
             List<ScoredDocument> scoredDocuments;
             if (scoredDocs.size() < cgiArgs.numdocs) {
                 scoredDocuments= scoredDocs.subList(0, scoredDocs.size());
@@ -219,6 +236,8 @@ class QueryHandler implements HttpHandler {
             }
 
             respondWithMsg(exchange, buf.toString(), null);
+        } else {
+            System.out.println("Sucsk");
         }
 
     }

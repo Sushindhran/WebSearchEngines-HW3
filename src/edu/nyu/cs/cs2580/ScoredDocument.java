@@ -38,7 +38,7 @@ class ScoredDocument implements Comparable<ScoredDocument> {
         Double pageRank = _pagerank;
         Integer numdocs = _numdocs;
         StringBuffer buf = new StringBuffer();
-        String url="url?"+"&did="+Integer.toHexString(docId);
+        String url="url?"+"did="+Integer.toHexString(docId);
         String line;
         line=template.replace("URL", url);
         line = line.replace("TITLE", title);

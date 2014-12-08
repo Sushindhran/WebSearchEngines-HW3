@@ -294,7 +294,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         f2.delete();
         for(int i=3; i<=partialFileCount; i++) {
             File oldFile = new File(_options._indexPrefix+"/temp.tsv");
-            System.out.println("Deleted temp "+i);
             File newFile = new File(_options._indexPrefix+"/first.tsv");
             oldFile.renameTo(newFile);
             try {
@@ -487,7 +486,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
-                //System.out.print("In updateIndex: Dictionary size "+dictionary.size());
 
                 if (!dictionary.containsKey(term)) {
                     dictionary.put(term, uniqueTermNum);
@@ -609,8 +607,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         LogMinerNumviews l = new LogMinerNumviews(new Options("conf/engine.conf"));
         HashMap<String, Float> _R = (HashMap<String, Float>) c.loadFromFile(_options._indexPrefix + "/pageRank.tsv");
         HashMap<String, Integer> _N = (HashMap<String, Integer>)l.loadFromFile(_options._indexPrefix + "/numViews.tsv");
-        System.out.println(_R.size());
-        System.out.println(_N.size());
         StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append("documentsAndDict.tsv");
         FileInputStream in = new FileInputStream(builder.toString());
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
@@ -653,7 +649,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         //Clear before loading into cache again.
         index.clear();
         indexLoadCount = loadIndex + 1;
-        System.out.println(indexLoadCount+" IndexLoadCount");
         loadIndex();
     }
 
@@ -678,7 +673,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
     public List<Integer> getTerm(int termId) throws ClassNotFoundException, IOException{
         if (cache.containsKey(termId)) {
-            System.out.println("Cache accessed");
             return cache.get(termId);
         }
         else{
@@ -686,7 +680,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 if(cache.size() == 100) {
                     cache.clear();
                 }
-                System.out.println("Not found in cache");
                 cache.put(termId, index.get(termId));
                 return cache.get(termId);
             } else {
@@ -742,7 +735,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 maxDocId = nextDocId;
             }
 
-            System.out.println("nextDocId("+docid+")= "+nextDocId);
 
             if(maxDocId != nextDocId) {
                 flag = false;
@@ -1080,7 +1072,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Set<Entry<String, Integer>> dictSet = ind.dictionary.entrySet();
             for(Entry e : dictSet) {
                 if(Integer.parseInt(e.getValue().toString()) <= 5000 ) {
-                    System.out.println(e.getValue()+ " " + e.getKey());
+                    //System.out.println(e.getValue()+ " " + e.getKey());
                 }
             }
         } catch (Exception e) {
