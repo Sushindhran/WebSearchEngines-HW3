@@ -31,13 +31,25 @@ module.exports = function gruntFile(grunt) {
                 options: {
                     async: false
                 }
+            },
+            pythonServer: {
+                command: 'python -m SimpleHTTPServer',
+                options: {
+                    async: false
+                }
+            },
+            pythonKill: {
+                command: 'killall python',
+                options: {
+                    async: false
+                }
             }
         },
 
         open : {
             search: {
                 app: 'Google Chrome',
-                path: path.resolve('client/src/main/index.html')
+                path: 'http://localhost:8000/client/src/main'
             }
         }
     });
@@ -59,5 +71,9 @@ module.exports = function gruntFile(grunt) {
 
     grunt.registerTask('index', [
         'shell:index'
+    ]);
+
+    grunt.registerTask('client', [
+        'shell:pythonServer'
     ]);
 };

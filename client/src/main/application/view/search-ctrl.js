@@ -1,7 +1,6 @@
-//Game controller that contains some of the game logic and UI
 WebSearchEngines.Controllers.controller('view.SearchController',
-    ['$scope', '$http', 'services.SearchService',
-        function ($scope, $http, searchService) {
+    ['$scope', '$http', '$location', 'services.SearchService',
+        function ($scope, $http, $location, searchService) {
             $scope.suggestions = searchService.getSuggestions("...");
             $scope.suggestions.then(function(data){
                 $scope.suggestions = data;
@@ -17,8 +16,11 @@ WebSearchEngines.Controllers.controller('view.SearchController',
 
             $scope.doSomethingElse = function(suggestion){
                 console.log("Suggestion selected: " + suggestion);
+                $scope.query = suggestion;
                 $scope.getData(function(data) {
-                    console.log(data);
+                    var pData = processString(data);
+                    searchService.setResults(pData);
+                    $location.path('/results');
                 });
             };
 
@@ -26,7 +28,7 @@ WebSearchEngines.Controllers.controller('view.SearchController',
             $scope.getData = function(callbackFunc) {
                 $http({
                     method: 'GET',
-                    url: 'http://localhost:25810/search?query='+$scope.suggestions+'&ranker=comprehensive&format=text'
+                    url: 'http://localhost:25810/search?query='+$scope.query+'&ranker=comprehensive&format=text'
                 }).success(function(data){
                     // With the data succesfully returned, call our callback
                     callbackFunc(data);
@@ -34,5 +36,23 @@ WebSearchEngines.Controllers.controller('view.SearchController',
                     alert("error");
                 });
             };
+
+            var processString = function(data) {
+                var pData = [],
+                    arr = data.split('\n');
+
+                for(var i = 0; i < arr.length; i++) {
+                    var line = {},
+                        lineArr = arr[i].split("\t");
+                    line.docId = lineArr[0];
+                    line.title = lineArr[1];
+                    line.score = lineArr[2];
+                    line.pageRank = lineArr[3];
+                    line.numdocs = lineArr[4];
+                    line.url = 'url?did='+line.docId;
+                    pData.push(line);
+                }
+                return pData;
+            }
         }
     ]);

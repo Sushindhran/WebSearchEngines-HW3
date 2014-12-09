@@ -35,8 +35,23 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
             // autocompleting drop down on/off
             $scope.completing = false;
 
+            var debounce = function (func, wait, immediate) {
+                var timeout;
+                return function() {
+                    var context = this, args = arguments;
+                    var later = function() {
+                        timeout = null;
+                        if (!immediate) func.apply(context, args);
+                    };
+                    var callNow = immediate && !timeout;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                    if (callNow) func.apply(context, args);
+                };
+            };
+
             // starts autocompleting on typing in something
-            $scope.$watch('searchParam', function(newValue, oldValue){
+            $scope.$watch('searchParam', debounce(function(newValue, oldValue){
 
                 if (oldValue === newValue || (!oldValue && $scope.initLock)) {
                     return;
@@ -51,7 +66,7 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                 // function thats passed to on-type attribute gets executed
                 if($scope.onType)
                     $scope.onType($scope.searchParam);
-            });
+            }, 500));
 
             // for hovering over suggestions
             this.preSelect = function(suggestion){
@@ -88,9 +103,8 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                 setTimeout(function(){watching = true;},1000);
                 $scope.setIndex(-1);
             };
-
-
         }],
+
         link: function(scope, element, attrs){
 
             setTimeout(function() {
@@ -133,7 +147,7 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
 
             document.addEventListener("keydown", function(e){
                 var keycode = e.keyCode || e.which;
-
+                console.log('Here in debounce');
                 switch (keycode){
                     case key.esc:
                         // disable suggestions on escape
@@ -154,7 +168,7 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                 }, 150);
             }, true);
 
-            element[0].addEventListener("keydown",function (e){
+            element[0].addEventListener("keydown", function (e){
                 var keycode = e.keyCode || e.which;
 
                 var l = angular.element(this).find('li').length;
@@ -235,6 +249,7 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
 
             });
         },
+
         template: '\
         <div class="autocomplete {{ attrs.class }}" id="{{ attrs.id }}">\
           <input\

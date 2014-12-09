@@ -27,14 +27,17 @@ angular.module(
     [
         '$routeProvider',
         function($routeProvider) {
-
             //Routes to search.html for /search
             $routeProvider.when('/search', {
-                templateUrl: '/HW3/client/src/main/application/view/search.html'
+                templateUrl: 'application/view/search.html'
+            });
+
+            $routeProvider.when('/results', {
+                templateUrl: 'application/view/results.html'
             });
 
             //Defaults to search.html if it doesn't match any route
-            $routeProvider.otherwise({ templateUrl: '/HW3/client/src/main/application/view/search.html' });
+            $routeProvider.otherwise({ templateUrl: '/client/src/main/application/view/search.html' });
         }
     ]
 );

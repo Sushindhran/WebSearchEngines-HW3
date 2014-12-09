@@ -1,5 +1,15 @@
-WebSearchEngines.Services.factory('services.SearchService', function($http, $q, $timeout){
-    var QueryRetriever = new Object();
+WebSearchEngines.Services.factory('services.SearchService', function($rootScope, $http, $q, $timeout){
+    var QueryRetriever = {};
+    var results;
+
+    QueryRetriever.setResults = function(res) {
+        results = res;
+    };
+
+    QueryRetriever.getResults = function() {
+        console.log('In get '+results);
+        return results;
+    };
 
     QueryRetriever.getSuggestions = function(query) {
         var queryData = $q.defer();
