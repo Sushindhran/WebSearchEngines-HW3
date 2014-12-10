@@ -66,7 +66,7 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                 // function thats passed to on-type attribute gets executed
                 if($scope.onType)
                     $scope.onType($scope.searchParam);
-            }, 500));
+            }, 250));
 
             // for hovering over suggestions
             this.preSelect = function(suggestion){
@@ -91,8 +91,9 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
             $scope.preSelectOff = this.preSelectOff;
 
             // selecting a suggestion with RIGHT ARROW or ENTER
-            $scope.select = function(suggestion){
-                if(suggestion){
+            $scope.select = function(suggestion) {
+                console.log('Suggestion is '+suggestion);
+                if(suggestion) {
                     $scope.searchParam = suggestion;
                     $scope.searchFilter = suggestion;
                     if($scope.onSelect)
@@ -147,7 +148,6 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
 
             document.addEventListener("keydown", function(e){
                 var keycode = e.keyCode || e.which;
-                console.log('Here in debounce');
                 switch (keycode){
                     case key.esc:
                         // disable suggestions on escape
@@ -155,6 +155,7 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                         scope.setIndex(-1);
                         scope.$apply();
                         e.preventDefault();
+                        break;
                 }
             }, true);
 
@@ -218,9 +219,15 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                         break;
                     case key.right:
                     case key.enter:
+                        if(index == -1) {
+                            scope.select(scope.searchParam);
+                        } else {
+                            scope.select(angular.element(angular.element(this).find('li')[index]).text());
+                        }
+                        scope.setIndex(-1);
+                        scope.$apply();
+                        break;
                     case key.tab:
-
-                        index = scope.getIndex();
                         // scope.preSelectOff();
                         if(index !== -1) {
                             scope.select(angular.element(angular.element(this).find('li')[index]).text());
