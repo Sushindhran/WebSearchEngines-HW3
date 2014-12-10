@@ -156,6 +156,16 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                         scope.$apply();
                         e.preventDefault();
                         break;
+                    case key.enter: {
+                        if(index == -1) {
+                            scope.select(scope.searchParam);
+                        } else {
+                            scope.select(angular.element(angular.element(this).find('li')[index]).text());
+                        }
+                        scope.setIndex(-1);
+                        scope.$apply();
+                        break;
+                    }
                 }
             }, true);
 
@@ -171,7 +181,6 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
 
             element[0].addEventListener("keydown", function (e){
                 var keycode = e.keyCode || e.which;
-
                 var l = angular.element(this).find('li').length;
 
                 // this allows submitting forms by pressing Enter in the autocompleted field
@@ -180,7 +189,6 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                 // implementation of the up and down movement in the list of suggestions
                 switch (keycode){
                     case key.up:
-
                         index = scope.getIndex()-1;
                         if(index<-1){
                             index = l-1;
@@ -191,12 +199,9 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                             break;
                         }
                         scope.setIndex(index);
-
                         if(index!==-1)
                             scope.preSelect(angular.element(angular.element(this).find('li')[index]).text());
-
                         scope.$apply();
-
                         break;
                     case key.down:
                         index = scope.getIndex()+1;
@@ -213,7 +218,6 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
 
                         if(index!==-1)
                             scope.preSelect(angular.element(angular.element(this).find('li')[index]).text());
-
                         break;
                     case key.left:
                         break;
@@ -241,7 +245,6 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
                         }
                         scope.setIndex(-1);
                         scope.$apply();
-
                         break;
                     case key.esc:
                         // disable suggestions on escape
