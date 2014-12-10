@@ -16,3 +16,8 @@ Mine - grunt mine
 Index - grunt index
 
 Serve - grunt serve
+
+The client needs the python server to run.
+ 1) Navigate to the project directory
+ 2) Run the python server - python -m SimpleHTTPServer 8000
+ 3) Start the client - grunt open 
