@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
 
-@font-face { /* Entypo pictograms by Daniel Bruce — www.entypo.com */
+@font-face {
     font-family: 'Entypo';
     src: url('../assets/entypo.ttf') format('truetype'),
     url('../assets/entypo.eot') format('eot');
@@ -88,17 +88,6 @@ nav,
 section {
     display: block;
 }
-
-audio,
-canvas,
-video {
-    display: inline-block;
-    *display: inline;
-    *zoom: 1;
-}
-audio:not([controls]) {
-    display: none;
-}
 html {
     font-size: 100%;
     -webkit-text-size-adjust: 100%;
@@ -159,7 +148,7 @@ div{
 }
 
 body{
-    background: url('../images/bg.jpg');
+    background-color: #E0E8FF;
     color: gray;
 }
 .main{

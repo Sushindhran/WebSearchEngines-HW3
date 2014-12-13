@@ -9,13 +9,13 @@ module.exports = function gruntFile(grunt) {
         shell: {
             //application scripts
             serve: {
-                command: ' java -cp lib/jsoup-1.8.1.jar:src: -Xmx2048m edu.nyu.cs.cs2580.SearchEngine \ --mode=serve --port=25810 --options=conf/engine.conf',
+                command: ' java -cp lib/jsoup-1.8.1.jar:src: -Xmx512m edu.nyu.cs.cs2580.SearchEngine \ --mode=serve --port=25810 --options=conf/engine.conf',
                 options: {
                     async: false
                 }
             },
             mine: {
-                command: 'java lib/jsoup-1.8.1.jar:src: -Xmx2048m edu.nyu.cs.cs2580.SearchServer \ --mode=mining --options=conf/engine.conf',
+                command: 'java -cp lib/jsoup-1.8.1.jar:src: -Xmx512m edu.nyu.cs.cs2580.SearchEngine \ --mode=mining --options=conf/engine.conf',
                 options: {
                     async: false
                 }

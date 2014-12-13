@@ -224,6 +224,11 @@ class IndexerFullScan extends Indexer implements Serializable {
         return null;
     }
 
+    @Override
+    public String[] getSuggestions(String prefix) {
+        return new String[0];
+    }
+
     ///// Utility
 
   public Vector<String> getTermVector(Vector<Integer> tokens) {

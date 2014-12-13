@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
@@ -41,6 +42,8 @@ class QueryHandler implements HttpHandler {
 
         public int did;
 
+        public String prefix;
+
         // The type of the ranker we will be using.
         public enum RankerType {
             NONE,
@@ -59,6 +62,7 @@ class QueryHandler implements HttpHandler {
         public enum OutputFormat {
             TEXT,
             HTML,
+            JSON
         }
         public OutputFormat _outputFormat = OutputFormat.TEXT;
 
@@ -99,6 +103,8 @@ class QueryHandler implements HttpHandler {
                     numterms=Integer.parseInt(val);
                 } else if (key.equals("did")) {
                     did = Integer.parseInt(val);
+                } else if (key.equals("prefix")) {
+                    prefix = val;
                 }
             }  // End of iterating over params
         }
@@ -118,9 +124,12 @@ class QueryHandler implements HttpHandler {
         Headers responseHeaders = exchange.getResponseHeaders();
         if(format == CgiArguments.OutputFormat.HTML) {
             responseHeaders.set("Content-Type", "text/html");
+        } else if(format == CgiArguments.OutputFormat.JSON) {
+            responseHeaders.set("Content-Type", "application/json");
         } else {
             responseHeaders.set("Content-Type", "text/plain");
         }
+
         responseHeaders.add("Access-Control-Allow-Origin", "*");
         exchange.sendResponseHeaders(200, 0); // arbitrary number of bytes
         OutputStream responseBody = exchange.getResponseBody();
@@ -167,7 +176,7 @@ class QueryHandler implements HttpHandler {
             respondWithMsg(exchange, " Something wrong with the URI!", null);
         }
 
-        if (!uriPath.equals("/search") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
+        if (!uriPath.equals("/search") && !uriPath.equals("/suggest") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
             respondWithMsg(exchange, " "+ uriPath + " is not handled!", null);
         }
 
@@ -211,15 +220,12 @@ class QueryHandler implements HttpHandler {
             }
             respondWithMsg(exchange, response.toString(), cgiArgs._outputFormat);
         } else if(uriPath.equals("/url")) {
-            System.out.println("In here");
             int docId = cgiArgs.did;
             Document d = _indexer.getDoc(docId);
             String filename = d.getTitle();
             String content = new String(Files.readAllBytes(Paths.get(_indexer._options._corpusPrefix+"/"+filename)));
             respondWithMsg(exchange, content, CgiArguments.OutputFormat.HTML);
-        }
-
-        else if(uriPath.equals("/prf")) {
+        } else if(uriPath.equals("/prf")) {
             List<ScoredDocument> scoredDocuments;
             if (scoredDocs.size() < cgiArgs.numdocs) {
                 scoredDocuments= scoredDocs.subList(0, scoredDocs.size());
@@ -236,8 +242,11 @@ class QueryHandler implements HttpHandler {
             }
 
             respondWithMsg(exchange, buf.toString(), null);
-        } else {
-            System.out.println("Sucsk");
+        } else if(uriPath.equals("/suggest")) {
+            System.out.println(cgiArgs.prefix);
+            String suggestions[] = _indexer.getSuggestions(cgiArgs.prefix);
+            //System.out.println(suggestions[0]+" " +suggestions[1]);
+            respondWithMsg(exchange, Arrays.toString(suggestions), CgiArguments.OutputFormat.JSON);
         }
 
     }

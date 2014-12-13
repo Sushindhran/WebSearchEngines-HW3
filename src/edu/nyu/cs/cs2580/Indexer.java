@@ -124,6 +124,7 @@ public abstract class Indexer {
 
     public abstract String getTermName(int termId);
 
+    public abstract String[] getSuggestions(String prefix);
     /**
      * All Indexers must be created through this factory class based on the
      * provided {@code options}.

@@ -737,4 +737,9 @@ public class IndexerInvertedDoconly extends Indexer implements Serializable{
     public String getTermName(int termId) {
         return null;
     }
+
+    @Override
+    public String[] getSuggestions(String prefix) {
+        return new String[0];
+    }
 }

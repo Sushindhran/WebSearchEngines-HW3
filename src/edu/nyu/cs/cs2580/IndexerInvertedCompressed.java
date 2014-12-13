@@ -16,7 +16,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     //Contains all documents
     private Map<Integer, DocumentIndexed> _documents = new HashMap<Integer, DocumentIndexed>();
     //Dictionary that contains all the terms and a termId
-    private Map<String, Integer> dictionary = new HashMap<String, Integer>();
+    private Map<String, Integer> dictionary = new TreeMap<String, Integer>();
     //The index uses the termId as key and an array list of the occurences as value
     private Map<Integer, ArrayList<Integer>> index = new HashMap<Integer, ArrayList<Integer>>();
     //Tracker list that holds the latest position of occurrence inserted in the map.
@@ -30,8 +30,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
     private Map<Integer, ArrayList<Integer>> documentTermMap = new HashMap<Integer, ArrayList<Integer>>();
     private Map<Integer, String> reverseDictionary = new HashMap<Integer, String>();
-
-
     private int partialFileCount = 0;
     int uniqueTermNum = 0;
     private boolean loadCache = false;
@@ -41,6 +39,30 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     public IndexerInvertedCompressed(Options options) {
         super(options);
         System.out.println("Using Indexer: " + this.getClass().getSimpleName());
+    }
+
+    /**
+     * Function for autosuggest
+     */
+    @Override
+    public String[] getSuggestions(String prefix) {
+        System.out.println(dictionary.size());
+        String suggestions[] = new String[20];
+        int count = 0;
+        Set<String> dictKeys = dictionary.keySet();
+        Iterator<String> dictIt = dictKeys.iterator();
+        while(dictIt.hasNext()) {
+            String key = dictIt.next();
+            if(key.startsWith(prefix.toLowerCase())) {
+                System.out.println(key);
+                suggestions[count] = key;
+                count++;
+                if(count==20) {
+                    break;
+                }
+            }
+        }
+        return suggestions;
     }
 
     @Override
@@ -485,6 +507,10 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             lower = lower.replaceAll(" ","");
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
+            //System.out.println(document+"\n\n\n\n\n\n\n");
+            if(term.contains(".")) {
+                System.out.println(term);
+            }
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
 
                 if (!dictionary.containsKey(term)) {
@@ -613,7 +639,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         String line = null;
         Boolean dict = false;
         while((line = br.readLine()) != null) {
-            //System.out.println("Line is "+line);
             List<String> lineList = stringTokenizer(line);
             if(lineList.size()!=0 && lineList.get(0).equals("#####")) {
                 dict = true;
@@ -657,13 +682,11 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         File[] listOfFiles = indexFolder.listFiles();
         int noOfFiles = listOfFiles.length-22;
         if(termId <= noOfFiles * 500) {
-            //System.out.println((int) Math.floor(termId / 5000));
             if(index.containsKey(termId)) {
                 return true;
             } else {
                 loadToCache((int) Math.floor(termId / 500));
             }
-            //System.out.println(index);
             if(index.containsKey(termId)) {
                 return true;
             }
@@ -702,7 +725,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     @Override
     public Document nextDoc(Query query, int docid) {
         if(query instanceof QueryPhrase && ((QueryPhrase) query)._phraseTokens.size() != 0){
-            System.out.println("nextDocForPhrase!!!");
             try {
                 return nextDocForPhrase(query, docid);
             } catch (Exception e) {
@@ -710,7 +732,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             }
         }
         else{
-            // System.out.println("nextDocForSimple!!!");
             try {
                 return nextDocForSimple(query, docid);
             } catch (Exception e) {
@@ -763,9 +784,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         }
         // valueList is the list of docIDS for the word.
         List<Integer> docOccLocList = getTerm(termId);
-      /*if(indexLoadCount!=1){
-      	docId = -1;
-      }*/
+
         if(docId == -1) {
             docId = docOccLocList.get(0);
             return docId;
@@ -787,7 +806,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     }
 
     private DocumentIndexed nextDocForPhrase(Query query, int docid) throws IOException, ClassNotFoundException {
-
         int maxDocId = -1;
         boolean phrasePresent = true;
         for (Vector<String> phrase : ((QueryPhrase) query)._phraseTokens) {
@@ -924,12 +942,10 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         else {
             return nextDocForPhraseHelper(q, docId);
         }
-
     }
 
     @Override
     public int corpusDocFrequencyByTerm(String term) {
-
         if (dictionary.containsKey(term)) {
             int termid = dictionary.get(term);
             try {
@@ -985,7 +1001,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         for (int docid : _documents.keySet()) {
             if (_documents.get(docid).getUrl().equals(url)) {
                 documentId = docid;
-                //System.out.println("Document ID: "+ documentId);
             }
         }
         if (documentId == -1) {
@@ -1052,7 +1067,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                     documentTermMap.put(docId, valueList);
                 }
 
-                return documentTermMap.get(doc).subList(0,m*2);
+                return documentTermMap.get(doc).subList(0, m*2);
             } catch (Exception e) {
                 e.printStackTrace();
             }
