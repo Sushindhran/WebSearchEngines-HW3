@@ -44,6 +44,8 @@ class QueryHandler implements HttpHandler {
 
         public String prefix;
 
+        public String location = null;
+
         // The type of the ranker we will be using.
         public enum RankerType {
             NONE,
@@ -105,10 +107,14 @@ class QueryHandler implements HttpHandler {
                     did = Integer.parseInt(val);
                 } else if (key.equals("prefix")) {
                     prefix = val;
+                } else if (key.equals("location")) {
+                    location = val;
                 }
             }  // End of iterating over params
         }
     }
+
+    public String location = null;
 
     // For accessing the underlying documents to be used by the Ranker. Since
     // we are not worried about thread-safety here, the Indexer class must take
@@ -176,7 +182,7 @@ class QueryHandler implements HttpHandler {
             respondWithMsg(exchange, " Something wrong with the URI!", null);
         }
 
-        if (!uriPath.equals("/search") && !uriPath.equals("/suggest") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
+        if (!uriPath.equals("/search") && !uriPath.equals("/location") && !uriPath.equals("/suggest") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
             respondWithMsg(exchange, " "+ uriPath + " is not handled!", null);
         }
 
@@ -203,7 +209,7 @@ class QueryHandler implements HttpHandler {
             // Ranking.
             scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
 
-        // Processing the query.
+            // Processing the query.
 
             StringBuffer response = new StringBuffer();
             switch (cgiArgs._outputFormat) {
@@ -217,6 +223,7 @@ class QueryHandler implements HttpHandler {
                     // nothing
             }
             respondWithMsg(exchange, response.toString(), cgiArgs._outputFormat);
+            new QueryLogger(cgiArgs._query).writeToFile();
         } else if(uriPath.equals("/url")) {
             int docId = cgiArgs.did;
             Document d = _indexer.getDoc(docId);
@@ -241,10 +248,18 @@ class QueryHandler implements HttpHandler {
 
             respondWithMsg(exchange, buf.toString(), null);
         } else if(uriPath.equals("/suggest")) {
-            String suggestions[] = _indexer.getSuggestions(cgiArgs.prefix);
+            String suggestions[] = null;
+            System.out.println(location);
+            if(location != null) {
+                suggestions = _indexer.getSuggestions(cgiArgs.prefix+" "+location);
+            } else {
+                suggestions = _indexer.getSuggestions(cgiArgs.prefix);
+            }
             respondWithMsg(exchange, Arrays.toString(suggestions), CgiArguments.OutputFormat.JSON);
+        } else if(uriPath.equals("/location")) {
+            location = cgiArgs.location;
+            respondWithMsg(exchange, "Location set successfully", CgiArguments.OutputFormat.JSON);
         }
-
     }
 }
 
