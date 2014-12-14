@@ -21,6 +21,7 @@ public class RankerComprehensive extends Ranker {
 
     @Override
     public Vector<ScoredDocument> runQuery(Query query, int numResults) {
+        query.processQuery();
         Document doc = null;
         ScoredDocument scoredDoc = null;
         int docId = -1;

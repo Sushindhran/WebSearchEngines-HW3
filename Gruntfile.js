@@ -9,25 +9,25 @@ module.exports = function gruntFile(grunt) {
         shell: {
             //application scripts
             serve: {
-                command: ' java -cp lib/jsoup-1.8.1.jar:src: -Xmx2048m edu.nyu.cs.cs2580.SearchEngine \ --mode=serve --port=25810 --options=conf/engine.conf',
+                command: ' java -cp lib/jsoup-1.8.1.jar:lib/trove-3.0.3.jar:src -Xmx4096m edu.nyu.cs.cs2580.SearchEngine \ --mode=serve --port=25810 --options=conf/engine.conf',
                 options: {
                     async: false
                 }
             },
             mine: {
-                command: 'java lib/jsoup-1.8.1.jar:src: -Xmx2048m edu.nyu.cs.cs2580.SearchServer \ --mode=mining --options=conf/engine.conf',
+                command: 'java lib/jsoup-1.8.1.jar:lib/trove-3.0.3.jar:src -Xmx2048m edu.nyu.cs.cs2580.SearchServer \ --mode=mining --options=conf/engine.conf',
                 options: {
                     async: false
                 }
             },
             index: {
-                command: 'java -cp lib/jsoup-1.8.1.jar:src: -Xmx2048m edu.nyu.cs.cs2580.SearchEngine \ --mode=index --options=conf/engine.conf',
+                command: 'java -cp lib/jsoup-1.8.1.jar:lib/trove-3.0.3.jar:src -Xmx2048m edu.nyu.cs.cs2580.SearchEngine \ --mode=index --options=conf/engine.conf',
                 options: {
                     async: false
                 }
             },
             compile: {
-                command: 'javac -cp lib/Jsoup-1.8.1.jar src/edu/nyu/cs/cs2580/*.java',
+                command: 'javac -Xlint -cp lib/Jsoup-1.8.1.jar:lib/trove-3.0.3.jar src/edu/nyu/cs/cs2580/*.java',
                 options: {
                     async: false
                 }

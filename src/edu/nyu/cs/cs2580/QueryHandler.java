@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Vector;
 
@@ -40,6 +41,8 @@ class QueryHandler implements HttpHandler {
         public int numdocs;
 
         public int did;
+
+        public String location="new york";
 
         // The type of the ranker we will be using.
         public enum RankerType {
@@ -99,6 +102,9 @@ class QueryHandler implements HttpHandler {
                     numterms=Integer.parseInt(val);
                 } else if (key.equals("did")) {
                     did = Integer.parseInt(val);
+                }
+                else if (key.equals("location")) {
+                    location = val;
                 }
             }  // End of iterating over params
         }
@@ -178,6 +184,8 @@ class QueryHandler implements HttpHandler {
         }
 
         Ranker ranker = null;
+
+        //LinkedHashSet<ScoredDocument> mergedDocs = new LinkedHashSet<ScoredDocument>();
         Vector<ScoredDocument> scoredDocs = null;
 
         if(uriPath.equals("/search")) {
@@ -188,11 +196,22 @@ class QueryHandler implements HttpHandler {
                 respondWithMsg(exchange,
                         "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
             }
-            QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query);
+
+            /*StringBuffer stringBuffer = new StringBuffer(cgiArgs._query);
+            stringBuffer.append(" "+cgiArgs.location);
+
+            QueryPhrase processedQuery = new QueryPhrase(stringBuffer.toString());
             processedQuery.processQuery();
+
+            scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
+            *///mergedDocs.addAll(scoredDocs);
+
+            QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query, cgiArgs.location);
+            //processedQuery.processQuery();
 
             // Ranking.
             scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
+            //mergedDocs.addAll(scoredDocs);
 
         }
         // Processing the query.

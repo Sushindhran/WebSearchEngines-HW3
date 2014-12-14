@@ -1,6 +1,13 @@
 package edu.nyu.cs.cs2580;
 
 import edu.nyu.cs.cs2580.SearchEngine.Options;
+import gnu.trove.iterator.TIntIntIterator;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TByteArrayList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
 
 import java.io.*;
 import java.util.*;
@@ -18,11 +25,11 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     //Dictionary that contains all the terms and a termId
     private Map<String, Integer> dictionary = new HashMap<String, Integer>();
     //The index uses the termId as key and an array list of the occurences as value
-    private Map<Integer, ArrayList<Integer>> index = new HashMap<Integer, ArrayList<Integer>>();
+    TIntObjectHashMap<TByteArrayList> index_new = new TIntObjectHashMap<TByteArrayList>();
     //Tracker list that holds the latest position of occurrence inserted in the map.
     private ArrayList<Integer> trackerList = new ArrayList<Integer>();
 
-    private Map<Integer, ArrayList<Integer>> cache = new HashMap<Integer, ArrayList<Integer>>();
+    private Map<Integer, List<Integer>>  cache = new HashMap<Integer, List<Integer>>();
 
   /*
    * This is the code for pseudo-random feedback
@@ -48,9 +55,10 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         int fileCount=0, indexCount=1;
         File corpusFolder = new File(_options._corpusPrefix);
         File[] listOfFiles = corpusFolder.listFiles();
+        assert listOfFiles != null;
         _numDocs = listOfFiles.length;
         //Ensuring that the map is clear
-        index.clear();
+        index_new.clear();
         //System.out.print(listOfFiles.length);
         for (File file : listOfFiles) {
 
@@ -58,7 +66,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 System.out.println("Constructing Partial Index" + (int) Math.ceil(indexCount / 500));
                 persist((int) Math.ceil(indexCount / 500));
                 persist_DocTermMap((int) Math.ceil(indexCount / 500));
-                index.clear();
+                index_new.clear();
                 fileCount = 0;
             }
             try {
@@ -72,7 +80,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         persist((int)Math.floor(indexCount/500)+1);
         persist_DocTermMap((int) Math.floor(indexCount / 500)+1);
         System.out.println("Constructing Partial Index " + (int)(Math.floor(indexCount/500)+1.0));
-        index.clear();
+        index_new.clear();
 
         System.out.println("Merging all partial Indexes");
 
@@ -136,15 +144,15 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
        * Col2 : List of Documents and corresponding values-separated by a space.
        */
 
-            Set<Integer> indexKeys = index.keySet();
+            TIntSet indexKeys = index_new.keySet();
 
             //Convert to list to sort
-            List<Integer> indexKeysList = new ArrayList<Integer>();
+            TIntList indexKeysList = new TIntArrayList();
             indexKeysList.addAll(indexKeys);
-            Collections.sort(indexKeysList);
+            indexKeysList.sort();
 
             //Iterate over the sorted keyList
-            Iterator<Integer> indexIt = indexKeysList.iterator();
+            TIntIterator indexIt = indexKeysList.iterator();
 
             while(indexIt.hasNext()) {
 
@@ -153,7 +161,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 indexWriter.write(key.toString());
 
                 //Value for key
-                ArrayList<Integer> indexVal = index.get(key);
+                TByteArrayList indexVal = index_new.get(key);
 
                 //Iterate over the document details
                 // 1) First Value is the number of occurences
@@ -172,7 +180,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                         skip += indexVal.get(x + 1) + 2;
                     }
 
-                    indexWriter.write(indexVal.get(x).toString() + "\t");
+                    indexWriter.write(indexVal.get(x) + "\t");
                     x++;
                 }
                 indexWriter.write("\n");
@@ -182,7 +190,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             e.printStackTrace();
         }
         //Clear index
-        index.clear();
+        index_new.clear();
     }
 
     private void persist_DocTermMap(int fileCount) throws IOException {
@@ -294,6 +302,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         f2.delete();
         for(int i=3; i<=partialFileCount; i++) {
             File oldFile = new File(_options._indexPrefix+"/temp.tsv");
+            System.out.println("Deleted temp "+i);
             File newFile = new File(_options._indexPrefix+"/first.tsv");
             oldFile.renameTo(newFile);
             try {
@@ -486,6 +495,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
+                //System.out.print("In updateIndex: Dictionary size "+dictionary.size());
 
                 if (!dictionary.containsKey(term)) {
                     dictionary.put(term, uniqueTermNum);
@@ -495,7 +505,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                     occurrence.add(indexCount);
                     occurrence.add(1);
                     occurrence.add(i);
-                    index.put(uniqueTermNum, occurrence);
+                    index_new.put(uniqueTermNum, VByte.encode(occurrence));
 
                     trackerList.add(0);
                     uniqueTermNum++;
@@ -504,15 +514,15 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                     int termId = dictionary.get(term);
                     int latestPosition = trackerList.get(termId);
 
-                    if(!index.containsKey(termId)) {
+                    if(!index_new.containsKey(termId)) {
                         ArrayList<Integer> occurrence = new ArrayList<Integer>();
                         occurrence.add(indexCount);
                         occurrence.add(1);
                         occurrence.add(i);
-                        index.put(termId, occurrence);
+                        index_new.put(termId, VByte.encode(occurrence));
                         trackerList.set(termId, 0);
                     } else {
-                        ArrayList<Integer> occurrence = index.get(termId);
+                        List<Integer> occurrence = VByte.decode(index_new.get(termId));
                         if (occurrence.get(latestPosition) == indexCount) {
                             occurrence.set(latestPosition + 1, occurrence.get(latestPosition + 1) + 1);
                             occurrence.add(i);
@@ -523,6 +533,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                             occurrence.add(1);
                             occurrence.add(i);
                         }
+                        index_new.put(termId, VByte.encode(occurrence));
                     }
                 }
                 _totalTermFrequency++;
@@ -582,20 +593,20 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         int count = 0;
         Integer key = 0;
 
-        ArrayList<Integer> value = null;
+        TByteArrayList value = null;
         while((line = br.readLine()) != null) {
             List<String> lineList = stringTokenizer(line);
             if(lineList.size() == 1) { // term id read from file
                 // initializing value list for next line
                 if(count != 0) {
-                    index.put(key, value);
+                    index_new.put(key, value);
                 }
-                value = new ArrayList<Integer>();
+                value = new TByteArrayList();
                 count++;
                 key = Integer.parseInt(lineList.get(0));
             } else {
                 for(String s : lineList) {
-                    value.add(Integer.parseInt(s));
+                    value.add(Byte.parseByte(s));
                 }
             }
         }
@@ -607,6 +618,8 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         LogMinerNumviews l = new LogMinerNumviews(new Options("conf/engine.conf"));
         HashMap<String, Float> _R = (HashMap<String, Float>) c.loadFromFile(_options._indexPrefix + "/pageRank.tsv");
         HashMap<String, Integer> _N = (HashMap<String, Integer>)l.loadFromFile(_options._indexPrefix + "/numViews.tsv");
+        System.out.println(_R.size());
+        System.out.println(_N.size());
         StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append("documentsAndDict.tsv");
         FileInputStream in = new FileInputStream(builder.toString());
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
@@ -647,8 +660,9 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
     public void loadToCache(int loadIndex) throws IOException, ClassNotFoundException {
         //Clear before loading into cache again.
-        index.clear();
+        index_new.clear();
         indexLoadCount = loadIndex + 1;
+        System.out.println(indexLoadCount+" IndexLoadCount");
         loadIndex();
     }
 
@@ -658,13 +672,13 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         int noOfFiles = listOfFiles.length-22;
         if(termId <= noOfFiles * 500) {
             //System.out.println((int) Math.floor(termId / 5000));
-            if(index.containsKey(termId)) {
+            if(index_new.containsKey(termId)) {
                 return true;
             } else {
                 loadToCache((int) Math.floor(termId / 500));
             }
             //System.out.println(index);
-            if(index.containsKey(termId)) {
+            if(index_new.containsKey(termId)) {
                 return true;
             }
         }
@@ -673,6 +687,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
     public List<Integer> getTerm(int termId) throws ClassNotFoundException, IOException{
         if (cache.containsKey(termId)) {
+            System.out.println("Cache accessed");
             return cache.get(termId);
         }
         else{
@@ -680,7 +695,8 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 if(cache.size() == 100) {
                     cache.clear();
                 }
-                cache.put(termId, index.get(termId));
+                System.out.println("Not found in cache");
+                cache.put(termId, VByte.decode(index_new.get(termId)));
                 return cache.get(termId);
             } else {
                 return null;
@@ -735,6 +751,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                 maxDocId = nextDocId;
             }
 
+            System.out.println("nextDocId("+docid+")= "+nextDocId);
 
             if(maxDocId != nextDocId) {
                 flag = false;
@@ -1072,7 +1089,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Set<Entry<String, Integer>> dictSet = ind.dictionary.entrySet();
             for(Entry e : dictSet) {
                 if(Integer.parseInt(e.getValue().toString()) <= 5000 ) {
-                    //System.out.println(e.getValue()+ " " + e.getKey());
+                    System.out.println(e.getValue()+ " " + e.getKey());
                 }
             }
         } catch (Exception e) {

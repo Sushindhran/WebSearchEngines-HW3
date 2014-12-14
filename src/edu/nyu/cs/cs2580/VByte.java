@@ -2,9 +2,13 @@ package edu.nyu.cs.cs2580;
 
 //import hdt.util.Mutable;
 
+import gnu.trove.list.array.TByteArrayList;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Typical implementation of Variable-Byte encoding for integers.
@@ -39,17 +43,21 @@ public class VByte {
         return out;
     }
 
-    public static int encode(byte[] data, int offset, int value) {
-        int i=0;
-        while( value > 127) {
-            data[offset+i] = (byte)(value & 127);
-            i++;
-            value>>>=7;
-        }
-        data[offset+i] = (byte)(value|0x80);
-        i++;
+    public static TByteArrayList encode(List<Integer> values) {
 
-        return i;
+        TByteArrayList data = new TByteArrayList();
+        for(int value : values) {
+            while( value > 127) {
+                byte d = (byte)(value & 127);
+                data.add(d);
+                value>>>=7;
+            }
+            byte d = (byte)(value|0x80);
+            data.add(d);
+        }
+
+
+        return data;
     }
 /*
 	public static int decode(byte[] data, int offset, Mutable<Integer> value) {
@@ -67,18 +75,25 @@ public class VByte {
 		return i;
 	}*/
 
-    public static int decode(byte[] data, int offset) {
+    public static List<Integer> decode(TByteArrayList data) {
         int out = 0;
         int i=0;
         int shift=0;
-        while( (0x80 & data[offset+i])==0) {
-            out |= (data[offset+i] & 127) << shift;
+        List<Integer> integerList = new ArrayList<Integer>();
+        while(data.size() != i) {
+            out=0;
+            shift=0;
+            while( (0x80 & data.get(i))==0) {
+                out |= (data.get(i) & 127) << shift;
+                i++;
+                shift+=7;
+            }
+            out |= (data.get(i) & 127) << shift;
             i++;
-            shift+=7;
+            integerList.add(out);
         }
-        out |= (data[offset+i] & 127) << shift;
-        i++;
-        return i;
+
+        return integerList;
     }
 
 }

@@ -16,6 +16,10 @@ public class QueryPhrase extends Query {
         super(query);
     }
 
+    public QueryPhrase(String query, String location) {
+        super(query, location);
+    }
+
     @Override
     public void processQuery() {
         if (_query == null) {
