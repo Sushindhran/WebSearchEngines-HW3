@@ -20,11 +20,15 @@ public class QueryLogger {
         }
     }
 
+    public int checkGreater(String current) {
+        return current.compareTo(query);
+    }
+
     public int[] checkIfQueryExists() throws IOException {
         int lineCount = -1, start = -1, results[] = {-1, -1};
         String line;
         boolean found = false;
-        File file = new File(logPath + query.charAt(0));
+        File file = new File(logPath + query.charAt(0) +".tsv");
         if(!file.exists()) {
             return results;
         }
@@ -34,15 +38,17 @@ public class QueryLogger {
             lineCount++;
             String lineArr[] = line.split("\t");
             //First line is count
-            if(lineCount == 0) {
-                continue;
-            }
-            if(start == -1 && lineArr[0].startsWith(query)) {
-                start = lineCount;
-            }
-            if(lineArr[0].equals(query)) {
-                found = true;
-                break;
+            if(lineCount != 0) {
+                int val = checkGreater(lineArr[0]);
+                if(val == 0) {
+                    found = true;
+                    break;
+                } else if(val < 0) {
+                    //Insert point.
+                    start = lineCount;
+                } else {
+                    break;
+                }
             }
         }
         br.close();
@@ -68,7 +74,7 @@ public class QueryLogger {
                 writer.write(1 + "\n");
                 writer.write(query + "\t" + 1 + "\n");
             } else {
-                FileReader fr = new FileReader(logPath + query.charAt(0));
+                FileReader fr = new FileReader(logPath + query.charAt(0)+".tsv");
                 BufferedReader br = new BufferedReader(fr);
 
                 while ((line = br.readLine()) != null) {

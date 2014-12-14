@@ -1073,7 +1073,7 @@ public class IndexerInvertedOccurrence extends Indexer  implements Serializable 
     }
 
     @Override
-    public String[] getSuggestions(String prefix) {
+    public String[] getSuggestions(String prefix, String location) {
         return new String[0];
     }
 

@@ -245,16 +245,13 @@ class QueryHandler implements HttpHandler {
                 buf.append(term).append("\t");
                 buf.append(prf.get(term)).append("\n");
             }
-
             respondWithMsg(exchange, buf.toString(), null);
         } else if(uriPath.equals("/suggest")) {
             String suggestions[] = null;
-            System.out.println(location);
-            if(location != null) {
-                suggestions = _indexer.getSuggestions(cgiArgs.prefix+" "+location);
-            } else {
-                suggestions = _indexer.getSuggestions(cgiArgs.prefix);
-            }
+            //Do something here with location also. Do not just append location to cgiArgs.prefix.
+            //It messes with the autocomplete.
+            //Parse location - split by comma and then use that to rank the suggestions
+            suggestions = _indexer.getSuggestions(cgiArgs.prefix, location);
             respondWithMsg(exchange, Arrays.toString(suggestions), CgiArguments.OutputFormat.JSON);
         } else if(uriPath.equals("/location")) {
             location = cgiArgs.location;

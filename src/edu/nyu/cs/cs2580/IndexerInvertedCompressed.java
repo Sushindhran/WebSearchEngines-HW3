@@ -63,7 +63,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         return suggestions;
     }*/
 
-    public String[] getSuggestions(String prefix) {
+    public String[] getSuggestions(String prefix, String location) {
         Map<String,Integer> queries = new HashMap<String, Integer>();
         prefix = prefix.toLowerCase();
         String[] splitString = prefix.split(" ");
