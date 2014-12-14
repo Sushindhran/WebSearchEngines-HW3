@@ -1073,6 +1073,11 @@ public class IndexerInvertedOccurrence extends Indexer  implements Serializable 
         return reverseDictionary.get(termId);
     }
 
+    @Override
+    public String[] getSuggestions(String prefix) {
+        return new String[0];
+    }
+
     public static void main(String args[]) {
         try {
             IndexerInvertedOccurrence ind = new IndexerInvertedOccurrence(new Options("conf/engine.conf"));

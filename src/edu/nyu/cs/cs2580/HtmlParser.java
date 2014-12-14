@@ -63,7 +63,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.*;
-import java.util.Scanner;
 import java.util.Vector;
 
 /**
@@ -113,17 +112,6 @@ public class HtmlParser {
     }
 
     public static String cleanString(String sentence) {
-        String word =  null;
-        Scanner s = new Scanner(sentence);
-        while(s.hasNext()){
-            word = s.next();
-            //System.out.println(word);
-            if(word.contains("Rasika") && word.contains("[")){
-                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"+ word);
-                break;
-            }
-        }
-
         sentence=sentence.replaceAll("\\s+", " ").trim();
         sentence = sentence.replaceAll("\"", " ").trim();
         sentence=sentence.replaceAll("\n", " ").trim();
@@ -168,7 +156,7 @@ public class HtmlParser {
     }
 
     public static void main(String args[]) {
-        File f =  new File("./data/wiki/Alief_Elsik_High_School");
+        File f =  new File("./data/wiki/.DS_Store");
         updateIndex(parseFile(f));
         //System.out.println(parseFile(f));
     }

@@ -1,7 +1,6 @@
 package edu.nyu.cs.cs2580;
 
 import edu.nyu.cs.cs2580.SearchEngine.Options;
-import gnu.trove.iterator.TIntIntIterator;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TByteArrayList;
@@ -50,12 +49,35 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         System.out.println("Using Indexer: " + this.getClass().getSimpleName());
     }
 
+    /**
+     * Function for autosuggest
+     */
+    @Override
+    public String[] getSuggestions(String prefix) {
+        System.out.println(dictionary.size());
+        String suggestions[] = new String[20];
+        int count = 0;
+        Set<String> dictKeys = dictionary.keySet();
+        Iterator<String> dictIt = dictKeys.iterator();
+        while(dictIt.hasNext()) {
+            String key = dictIt.next();
+            if(key.startsWith(prefix.toLowerCase())) {
+                System.out.println(key);
+                suggestions[count] = key;
+                count++;
+                if(count==20) {
+                    break;
+                }
+            }
+        }
+        return suggestions;
+    }
+
     @Override
     public void constructIndex() throws IOException {
         int fileCount=0, indexCount=1;
         File corpusFolder = new File(_options._corpusPrefix);
         File[] listOfFiles = corpusFolder.listFiles();
-        assert listOfFiles != null;
         _numDocs = listOfFiles.length;
         //Ensuring that the map is clear
         index_new.clear();
@@ -302,7 +324,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         f2.delete();
         for(int i=3; i<=partialFileCount; i++) {
             File oldFile = new File(_options._indexPrefix+"/temp.tsv");
-            System.out.println("Deleted temp "+i);
             File newFile = new File(_options._indexPrefix+"/first.tsv");
             oldFile.renameTo(newFile);
             try {
@@ -494,8 +515,11 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             lower = lower.replaceAll(" ","");
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
+            //System.out.println(document+"\n\n\n\n\n\n\n");
+            if(term.contains(".")) {
+                System.out.println(term);
+            }
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
-                //System.out.print("In updateIndex: Dictionary size "+dictionary.size());
 
                 if (!dictionary.containsKey(term)) {
                     dictionary.put(term, uniqueTermNum);
@@ -618,8 +642,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         LogMinerNumviews l = new LogMinerNumviews(new Options("conf/engine.conf"));
         HashMap<String, Float> _R = (HashMap<String, Float>) c.loadFromFile(_options._indexPrefix + "/pageRank.tsv");
         HashMap<String, Integer> _N = (HashMap<String, Integer>)l.loadFromFile(_options._indexPrefix + "/numViews.tsv");
-        System.out.println(_R.size());
-        System.out.println(_N.size());
         StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append("documentsAndDict.tsv");
         FileInputStream in = new FileInputStream(builder.toString());
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
@@ -1089,7 +1111,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Set<Entry<String, Integer>> dictSet = ind.dictionary.entrySet();
             for(Entry e : dictSet) {
                 if(Integer.parseInt(e.getValue().toString()) <= 5000 ) {
-                    System.out.println(e.getValue()+ " " + e.getKey());
+                    //System.out.println(e.getValue()+ " " + e.getKey());
                 }
             }
         } catch (Exception e) {

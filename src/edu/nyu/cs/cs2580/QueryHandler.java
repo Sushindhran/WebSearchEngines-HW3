@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Vector;
 
@@ -44,6 +44,8 @@ class QueryHandler implements HttpHandler {
 
         public String location="new york";
 
+        public String prefix;
+
         // The type of the ranker we will be using.
         public enum RankerType {
             NONE,
@@ -62,6 +64,7 @@ class QueryHandler implements HttpHandler {
         public enum OutputFormat {
             TEXT,
             HTML,
+            JSON
         }
         public OutputFormat _outputFormat = OutputFormat.TEXT;
 
@@ -102,6 +105,8 @@ class QueryHandler implements HttpHandler {
                     numterms=Integer.parseInt(val);
                 } else if (key.equals("did")) {
                     did = Integer.parseInt(val);
+                } else if (key.equals("prefix")) {
+                    prefix = val;
                 }
                 else if (key.equals("location")) {
                     location = val;
@@ -124,9 +129,12 @@ class QueryHandler implements HttpHandler {
         Headers responseHeaders = exchange.getResponseHeaders();
         if(format == CgiArguments.OutputFormat.HTML) {
             responseHeaders.set("Content-Type", "text/html");
+        } else if(format == CgiArguments.OutputFormat.JSON) {
+            responseHeaders.set("Content-Type", "application/json");
         } else {
             responseHeaders.set("Content-Type", "text/plain");
         }
+
         responseHeaders.add("Access-Control-Allow-Origin", "*");
         exchange.sendResponseHeaders(200, 0); // arbitrary number of bytes
         OutputStream responseBody = exchange.getResponseBody();
@@ -184,8 +192,6 @@ class QueryHandler implements HttpHandler {
         }
 
         Ranker ranker = null;
-
-        //LinkedHashSet<ScoredDocument> mergedDocs = new LinkedHashSet<ScoredDocument>();
         Vector<ScoredDocument> scoredDocs = null;
 
         if(uriPath.equals("/search")) {
@@ -197,21 +203,14 @@ class QueryHandler implements HttpHandler {
                         "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
             }
 
-            /*StringBuffer stringBuffer = new StringBuffer(cgiArgs._query);
-            stringBuffer.append(" "+cgiArgs.location);
-
-            QueryPhrase processedQuery = new QueryPhrase(stringBuffer.toString());
-            processedQuery.processQuery();
-
-            scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
-            *///mergedDocs.addAll(scoredDocs);
+            //scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
+            //mergedDocs.addAll(scoredDocs);
 
             QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query, cgiArgs.location);
             //processedQuery.processQuery();
 
             // Ranking.
             scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
-            //mergedDocs.addAll(scoredDocs);
 
         }
         // Processing the query.
@@ -255,8 +254,11 @@ class QueryHandler implements HttpHandler {
             }
 
             respondWithMsg(exchange, buf.toString(), null);
-        } else {
-            System.out.println("Sucsk");
+        } else if(uriPath.equals("/suggest")) {
+            System.out.println(cgiArgs.prefix);
+            String suggestions[] = _indexer.getSuggestions(cgiArgs.prefix);
+            //System.out.println(suggestions[0]+" " +suggestions[1]);
+            respondWithMsg(exchange, Arrays.toString(suggestions), CgiArguments.OutputFormat.JSON);
         }
 
     }
