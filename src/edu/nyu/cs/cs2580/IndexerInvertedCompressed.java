@@ -16,7 +16,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     //Contains all documents
     private Map<Integer, DocumentIndexed> _documents = new HashMap<Integer, DocumentIndexed>();
     //Dictionary that contains all the terms and a termId
-    private Map<String, Integer> dictionary = new TreeMap<String, Integer>();
+    private Map<String, Integer> dictionary = new HashMap<String, Integer>();
     //The index uses the termId as key and an array list of the occurences as value
     private Map<Integer, ArrayList<Integer>> index = new HashMap<Integer, ArrayList<Integer>>();
     //Tracker list that holds the latest position of occurrence inserted in the map.
@@ -46,7 +46,6 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
      */
     @Override
     public String[] getSuggestions(String prefix) {
-        System.out.println(dictionary.size());
         String suggestions[] = new String[20];
         int count = 0;
         Set<String> dictKeys = dictionary.keySet();
@@ -54,8 +53,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         while(dictIt.hasNext()) {
             String key = dictIt.next();
             if(key.startsWith(prefix.toLowerCase())) {
-                System.out.println(key);
-                suggestions[count] = key;
+                suggestions[count] = "\""+key+"\"";
                 count++;
                 if(count==20) {
                     break;
@@ -132,6 +130,9 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             sb.append(title);
             sb.append(" ");
             sb.append(body);
+            if(sb.toString().contains("..")) {
+                System.out.println(file.getName());
+            }
             int numWords = updateIndex(sb.toString().trim(), indexCount);
             documentIndexed.setNumberOfWords(numWords);
             _documents.put(indexCount, documentIndexed);
@@ -508,9 +509,9 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
             //System.out.println(document+"\n\n\n\n\n\n\n");
-            if(term.contains(".")) {
-                System.out.println(term);
-            }
+            /*if(term.contains(".")) {
+                continue;
+            }*/
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
 
                 if (!dictionary.containsKey(term)) {

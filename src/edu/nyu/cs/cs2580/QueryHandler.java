@@ -203,10 +203,8 @@ class QueryHandler implements HttpHandler {
             // Ranking.
             scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
 
-        }
         // Processing the query.
 
-        if (uriPath.equals("/search")) {
             StringBuffer response = new StringBuffer();
             switch (cgiArgs._outputFormat) {
                 case TEXT:
@@ -243,9 +241,7 @@ class QueryHandler implements HttpHandler {
 
             respondWithMsg(exchange, buf.toString(), null);
         } else if(uriPath.equals("/suggest")) {
-            System.out.println(cgiArgs.prefix);
             String suggestions[] = _indexer.getSuggestions(cgiArgs.prefix);
-            //System.out.println(suggestions[0]+" " +suggestions[1]);
             respondWithMsg(exchange, Arrays.toString(suggestions), CgiArguments.OutputFormat.JSON);
         }
 

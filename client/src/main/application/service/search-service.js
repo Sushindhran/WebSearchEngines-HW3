@@ -11,28 +11,30 @@ WebSearchEngines.Services.factory('services.SearchService', function($rootScope,
         return results;
     };
 
-    delete $http.defaults.headers.common['X-Requested-With']
+    delete $http.defaults.headers.common['X-Requested-With'];
     var getData = function(prefix, callbackFunc) {
         $http({
             method: 'GET',
             url: 'http://localhost:25810/suggest?prefix='+prefix
-        }).success(function(data){
+        }).success(function(data) {
             // With the data succesfully returned, call our callback
             callbackFunc(data);
-        }).error(function(){
-            alert("error");
+        }).error(function(data, status, headers, config) {
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+            console.log(data, status, headers, config);
         });
     };
 
     QueryRetriever.getSuggestions = function(query) {
-        var queryData = $q.defer();
+        var queryData = $q.defer(),
+            queries = [];
 
-        var queries = ["Obama", "Web Search Engines", "New York", "Rasika", "Sushi", "Liverpool", "Cambridge University", "Soccer"];
-
-        getData(query, function(data) {
-            console.log("JSON "+data);
-            queries = JSON.parse(data);
-        });
+        if(query !== "") {
+            getData(query, function(data) {
+                queries = data;
+            });
+        }
 
         $timeout(function(){
             queryData.resolve(queries);
@@ -40,5 +42,6 @@ WebSearchEngines.Services.factory('services.SearchService', function($rootScope,
 
         return queryData.promise
     };
+
     return QueryRetriever;
 });

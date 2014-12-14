@@ -50,6 +50,8 @@ public class StopWords {
         stopWords.add("until");
         stopWords.add("[edit]");
         stopWords.add("from");
+        stopWords.add("with");
+        stopWords.add("am");
         for(int i=0; i<100;i++) {
             stopWords.add((Integer.toString(i)));
         }

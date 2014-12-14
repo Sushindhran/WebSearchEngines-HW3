@@ -1,7 +1,7 @@
 WebSearchEngines.Controllers.controller('view.SearchController',
     ['$scope', '$http', '$location', 'services.SearchService',
         function ($scope, $http, $location, searchService) {
-            $scope.suggestions = searchService.getSuggestions("A");
+            $scope.suggestions = searchService.getSuggestions("");
             $scope.suggestions.then(function(data){
                 $scope.suggestions = data;
             });
