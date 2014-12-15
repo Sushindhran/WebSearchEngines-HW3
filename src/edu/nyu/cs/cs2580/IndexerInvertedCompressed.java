@@ -53,62 +53,57 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
      * Function for autosuggest
      */
     @Override
-    /*public String[] getSuggestions(String prefix) {
-        String suggestions[] = new String[20];
+    public String[] getSuggestions(String prefix, String location) {
+        prefix = prefix.toLowerCase();
+        String suggestions[] = new String[40];
+        String completions[] = getCompletions(prefix);
+
+        char ch = prefix.charAt(0);
+        String fileName = new StringBuilder().append(_options._logPrefix+"/").append(ch).append(".tsv").toString();
+        Map<String, Integer> results = null;
+        try {
+            results = searchSuggestions(prefix, fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(results == null){
+            return suggestions;
+        }
+        suggestions = getPopularSuggestions(results);
+
+        suggestions = mergeSuggestions(suggestions, completions);
+
+        return suggestions;
+    }
+
+    public String[] mergeSuggestions(String[] sug, String[] comp) {
+        int compCount = 0;
+        for(int i=0; i<sug.length; i++) {
+            if(sug[i] == null) {
+                sug[i] = comp[compCount];
+                compCount++;
+            }
+        }
+        return sug;
+    }
+
+
+    public String[] getCompletions(String prefix) {
         int count = 0;
+        String completions[] = new String[20];
         Set<String> dictKeys = dictionary.keySet();
         Iterator<String> dictIt = dictKeys.iterator();
         while(dictIt.hasNext()) {
             String key = dictIt.next();
             if(key.startsWith(prefix.toLowerCase())) {
-                suggestions[count] = "\""+key+"\"";
+                completions[count] = "\""+key+"\"";
                 count++;
                 if(count==20) {
                     break;
                 }
             }
         }
-        return suggestions;
-    }*/
-
-    public String[] getSuggestions(String prefix, String location) {
-        Map<String,Integer> queries = new HashMap<String, Integer>();
-        prefix = prefix.toLowerCase();
-        String[] splitString = prefix.split(" ");
-        String suggestions[] = new String[20];
-        if(splitString.length < 2) {
-            int count = 0;
-            Set<String> dictKeys = dictionary.keySet();
-            Iterator<String> dictIt = dictKeys.iterator();
-            while(dictIt.hasNext()) {
-                String key = dictIt.next();
-                if(key.startsWith(prefix.toLowerCase())) {
-                    suggestions[count] = "\""+key+"\"";
-                    count++;
-                    if(count==20) {
-                        break;
-                    }
-                }
-            }
-
-        }
-        else {
-            char ch = prefix.charAt(0);
-            String fileName = new StringBuilder().append(_options._logPrefix+"/").append(ch).append(".tsv").toString();
-            Map<String, Integer> results = null;
-            try {
-                results = searchSuggestions(prefix, fileName);
-                System.out.println("1");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            if(results == null){
-                return suggestions;
-            }
-            suggestions = getPopularSuggestions(results);
-        }
-        System.out.println(suggestions);
-        return suggestions;
+        return completions;
     }
 
     public String[] getPopularSuggestions(Map<String, Integer> queries){
@@ -117,7 +112,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
 
         String[] returnResult = new String[5];
         for(int i=0;i<result.size();i++) {
-            if(i==5){
+            if(i==10){
                 break;
             }
             returnResult[i]= "\""+result.get(i)+"\"";
@@ -129,13 +124,13 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
     public Map<String, Integer> searchSuggestions(String prefix, String fileName ) throws IOException{
 
         Map<String, Integer> results = new HashMap<String, Integer>();
-
+        
         BufferedReader br = new BufferedReader(new FileReader(fileName));
         String line = br.readLine();
-        boolean start = true;
+        //boolean start = true;
         while((line = br.readLine()) != null){
             String[] splitFileLine = line.split("\t");
-
+            
             if((splitFileLine[0].compareToIgnoreCase(prefix) >= 0) && splitFileLine[0].contains(prefix) ){
                 results.put(splitFileLine[0], Integer.parseInt(splitFileLine[1]));
             }

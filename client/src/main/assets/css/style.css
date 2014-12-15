@@ -154,7 +154,7 @@ body{
 .main{
     display: inline-block;
     padding: 2em;
-    width: 30em;
+    width: 40em;
     margin-bottom: 5em;
 }
 
@@ -194,4 +194,9 @@ footer a{
 footer a:hover{
     color: #b15;
     font-weight: bold;
+}
+
+.results {
+    text-align: left;
+    margin-left: 50px;
 }
