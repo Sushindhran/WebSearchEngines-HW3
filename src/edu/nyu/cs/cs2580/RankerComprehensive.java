@@ -13,7 +13,9 @@ import java.util.*;
  */
 public class RankerComprehensive extends Ranker {
 
-    boolean loc = true;
+    boolean loc1 = true;
+    boolean loc2 = true;
+    boolean loc3 = true;
 
     public RankerComprehensive(Options options,
                                CgiArguments arguments, Indexer indexer) {
@@ -55,6 +57,8 @@ public class RankerComprehensive extends Ranker {
                 docId = doc._docid;
             }
 
+            loc1 = false;
+
             query1 = new QueryPhrase(query._query + " \"" + city + "\"");
             query1.processQuery();
             docId = -1;
@@ -66,6 +70,7 @@ public class RankerComprehensive extends Ranker {
                 docId = doc._docid;
             }
 
+            loc2 = false;
             query1 = new QueryPhrase(query._query + " \"" + state + "\"");
             query1.processQuery();
             docId = -1;
@@ -77,7 +82,7 @@ public class RankerComprehensive extends Ranker {
                 docId = doc._docid;
             }
 
-            loc = false;
+            loc3 = false;
             docId = -1;
 
             query.processQuery();
@@ -90,7 +95,7 @@ public class RankerComprehensive extends Ranker {
                 docId = doc._docid;
             }
 
-            loc = true;
+            loc1 = true;
 
             System.out.println("Location: " +query.location);
 
@@ -124,7 +129,7 @@ public class RankerComprehensive extends Ranker {
         Vector<String> qv = new Vector<String>();
         float pageRank = d.getPageRank();
         int numviews = d.getNumViews();
-        for (String str : query._tokens) {
+        for (String str : query._tokens2) {
             //Check the token for spaces and handle them accordingly
             String[] temp = str.split(" ");
             if (temp.length > 1) {
@@ -155,14 +160,22 @@ public class RankerComprehensive extends Ranker {
             score += (Math.log(cumulativeVal) / Math.log(2));
         }
 
-        score = score * 0.65;
-        //score += 0.39*(Math.log(pageRank) / Math.log(2));
+        //score = score * 0.65;
         //score += 0.0001*(Math.log(numviews) / Math.log(2));
 
         score = Math.pow(2, score);
 
-        if(loc) {
-            score = score + 0.01;
+        score = score * 0.65;
+        score += 0.39*pageRank;
+
+        if(loc1) {
+            score = score + 0.1;
+        }
+        if(loc2) {
+            score = score + 0.05;
+        }
+        if(loc3) {
+            score = score + 0.025;
         }
 
         ScoredDocument scoredDocument = new ScoredDocument(d, score);

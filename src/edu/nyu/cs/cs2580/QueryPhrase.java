@@ -39,6 +39,7 @@ public class QueryPhrase extends Query {
                 Vector<String> stopWords = new StopWords().getStopWords();
                 if(!stopWords.contains(word)) {
                     temp.add(PorterStemming.getStemmedWord(word));
+                    _tokens2.add(PorterStemming.getStemmedWord(word));
                 }
             }
             _phraseTokens.add(temp);
@@ -53,6 +54,7 @@ public class QueryPhrase extends Query {
             Vector<String> stopWords = new StopWords().getStopWords();
             if(!stopWords.contains(word)) {
                 _tokens.add(PorterStemming.getStemmedWord(word));
+                _tokens2.add(PorterStemming.getStemmedWord(word));
             }
         }
         s3.close();
