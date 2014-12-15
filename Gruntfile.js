@@ -14,6 +14,12 @@ module.exports = function gruntFile(grunt) {
                     async: false
                 }
             },
+            serveLocation: {
+                command: ' java -cp lib/jsoup-1.8.1.jar:src: -Xmx512m edu.nyu.cs.cs2580.SearchEngine \ --mode=serve --port=25810 --options=conf/engine.conf',
+                options: {
+                    async: false
+                }
+            },
             mine: {
                 command: 'java -cp lib/jsoup-1.8.1.jar:src: -Xmx512m edu.nyu.cs.cs2580.SearchEngine \ --mode=mining --options=conf/engine.conf',
                 options: {
@@ -46,6 +52,26 @@ module.exports = function gruntFile(grunt) {
             }
         },
 
+        replace: {
+            indexLoc: {
+                src: ['conf/engine.conf'],             // source files array (supports minimatch)
+                overwrite: true,
+                replacements: [{
+                    from: 'data/index',                   // string replacement
+                    to: 'data/indLocation'
+                }]
+            },
+
+            index: {
+                src: ['conf/engine.conf'],             // source files array (supports minimatch)
+                overwrite: true,
+                replacements: [{
+                    from: 'data/indLocation',                   // string replacement
+                    to: 'data/index'
+                }]
+            }
+        },
+
         open : {
             search: {
                 app: 'Google Chrome',
@@ -55,6 +81,7 @@ module.exports = function gruntFile(grunt) {
     });
 
     grunt.loadNpmTasks('grunt-shell-spawn');
+    grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-open');
 
     grunt.registerTask('compile', [
@@ -62,7 +89,13 @@ module.exports = function gruntFile(grunt) {
     ]);
 
     grunt.registerTask('serve', [
-       'shell:serve'
+        'replace:index',
+        'shell:serve'
+    ]);
+
+    grunt.registerTask('serveLoc', [
+        'replace:indexLoc',
+        'shell:serveLocation'
     ]);
 
     grunt.registerTask('mine', [
