@@ -17,6 +17,7 @@ public class Query {
     public String _query = null;
     public String location = null;
     public Vector<String> _tokens = new Vector<String>();
+    public Vector<String> _tokens2 = new Vector<String>();
 
     public Query(String query) {
         _query = query;
@@ -40,6 +41,7 @@ public class Query {
             Vector<String> stopWords = new StopWords().getStopWords();
             if(!stopWords.contains(word)) {
                 _tokens.add(PorterStemming.getStemmedWord(word));
+                _tokens2.add(PorterStemming.getStemmedWord(word));
             }
         }
         s.close();

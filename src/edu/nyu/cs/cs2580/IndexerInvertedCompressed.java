@@ -738,7 +738,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         CorpusAnalyzerPagerank c = new CorpusAnalyzerPagerank(new Options("conf/engine.conf"));
         LogMinerNumviews l = new LogMinerNumviews(new Options("conf/engine.conf"));
         HashMap<String, Float> _R = (HashMap<String, Float>) c.loadFromFile(_options._indexPrefix + "/pageRank.tsv");
-        HashMap<String, Integer> _N = (HashMap<String, Integer>)l.loadFromFile(_options._indexPrefix + "/numViews.tsv");
+        //HashMap<String, Integer> _N = (HashMap<String, Integer>)l.loadFromFile(_options._indexPrefix + "/numViews.tsv");
         StringBuilder builder = new StringBuilder(_options._indexPrefix).append("/").append("documentsAndDict.tsv");
         FileInputStream in = new FileInputStream(builder.toString());
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
@@ -762,7 +762,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
                     documentIndexed.setUrl(scanner.next());
                     documentIndexed.setNumberOfWords(Long.parseLong(scanner.next()));
                     documentIndexed.setPageRank(_R.get(title));
-                    documentIndexed.setNumViews(_N.get(title));
+                    //documentIndexed.setNumViews(_N.get(title));
                     _documents.put(docid, documentIndexed);
                 }
             } else if(lineList.size() > 1 && lineList.size() <=2){
