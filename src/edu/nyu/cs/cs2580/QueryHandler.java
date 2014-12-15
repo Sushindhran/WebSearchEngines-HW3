@@ -42,9 +42,9 @@ class QueryHandler implements HttpHandler {
 
         public int did;
 
-        public String location="new york";
-
         public String prefix;
+
+        public String location = "";
 
         // The type of the ranker we will be using.
         public enum RankerType {
@@ -107,13 +107,14 @@ class QueryHandler implements HttpHandler {
                     did = Integer.parseInt(val);
                 } else if (key.equals("prefix")) {
                     prefix = val;
-                }
-                else if (key.equals("location")) {
+                } else if (key.equals("location")) {
                     location = val;
                 }
             }  // End of iterating over params
         }
     }
+
+    public String location = null;
 
     // For accessing the underlying documents to be used by the Ranker. Since
     // we are not worried about thread-safety here, the Indexer class must take
@@ -181,12 +182,13 @@ class QueryHandler implements HttpHandler {
             respondWithMsg(exchange, " Something wrong with the URI!", null);
         }
 
-        if (!uriPath.equals("/search") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
+        if (!uriPath.equals("/search") && !uriPath.equals("/suggest") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
             respondWithMsg(exchange, " "+ uriPath + " is not handled!", null);
         }
 
         // Process the CGI arguments.
         CgiArguments cgiArgs = new CgiArguments(uriQuery);
+
         if (uriPath.equals("/search") && cgiArgs._query.isEmpty()) {
             respondWithMsg(exchange, "No query is given!", null);
         }
@@ -202,10 +204,6 @@ class QueryHandler implements HttpHandler {
                 respondWithMsg(exchange,
                         "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
             }
-
-            //scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
-            //mergedDocs.addAll(scoredDocs);
-
             QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query, cgiArgs.location);
             //processedQuery.processQuery();
 
@@ -228,16 +226,14 @@ class QueryHandler implements HttpHandler {
                     // nothing
             }
             respondWithMsg(exchange, response.toString(), cgiArgs._outputFormat);
+            new QueryLogger(cgiArgs._query).writeToFile();
         } else if(uriPath.equals("/url")) {
-            System.out.println("In here");
             int docId = cgiArgs.did;
             Document d = _indexer.getDoc(docId);
             String filename = d.getTitle();
             String content = new String(Files.readAllBytes(Paths.get(_indexer._options._corpusPrefix+"/"+filename)));
             respondWithMsg(exchange, content, CgiArguments.OutputFormat.HTML);
-        }
-
-        else if(uriPath.equals("/prf")) {
+        } else if(uriPath.equals("/prf")) {
             List<ScoredDocument> scoredDocuments;
             if (scoredDocs.size() < cgiArgs.numdocs) {
                 scoredDocuments= scoredDocs.subList(0, scoredDocs.size());
@@ -255,10 +251,15 @@ class QueryHandler implements HttpHandler {
 
             respondWithMsg(exchange, buf.toString(), null);
         } else if(uriPath.equals("/suggest")) {
-            System.out.println(cgiArgs.prefix);
-            String suggestions[] = _indexer.getSuggestions(cgiArgs.prefix);
-            //System.out.println(suggestions[0]+" " +suggestions[1]);
+            String suggestions[] = null;
+            //Do something here with location also. Do not just append location to cgiArgs.prefix.
+            //It messes with the autocomplete.
+            //Parse location - split by comma and then use that to rank the suggestions
+            suggestions = _indexer.getSuggestions(cgiArgs.prefix, location);
             respondWithMsg(exchange, Arrays.toString(suggestions), CgiArguments.OutputFormat.JSON);
+        } else if(uriPath.equals("/location")) {
+            location = cgiArgs.location;
+            respondWithMsg(exchange, "Location set successfully", CgiArguments.OutputFormat.JSON);
         }
 
     }

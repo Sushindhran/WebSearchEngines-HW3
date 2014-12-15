@@ -1,8 +1,10 @@
 <div ng-controller="view.SearchController as ctrl">
     <div class="main">
         <h1>WEB SEARCH ENGINES</h1>
+        <h3>LOCATION: <span>{{location}}</span></h3>
         <autocomplete ng-model="result" attr-placeholder="Search Corpus" click-activation="true" data="suggestions" on-type="doSomething" on-select="doSomethingElse"></autocomplete>
         <br>
-        Autocomplete directive in AngularJS
+        Autocomplete directive in AngularJS <br>
+        Debounce function used to delay asynchronous calls to the server <br>
     </div>
 </div>

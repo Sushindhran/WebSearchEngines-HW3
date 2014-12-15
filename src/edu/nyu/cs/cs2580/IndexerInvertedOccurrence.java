@@ -294,7 +294,6 @@ public class IndexerInvertedOccurrence extends Indexer  implements Serializable 
         f2.delete();
         for(int i=3; i<=partialFileCount; i++) {
             File oldFile = new File(_options._indexPrefix+"/temp.tsv");
-            System.out.println("Deleted temp "+i);
             File newFile = new File(_options._indexPrefix+"/first.tsv");
             oldFile.renameTo(newFile);
             try {
@@ -1074,7 +1073,7 @@ public class IndexerInvertedOccurrence extends Indexer  implements Serializable 
     }
 
     @Override
-    public String[] getSuggestions(String prefix) {
+    public String[] getSuggestions(String prefix, String location) {
         return new String[0];
     }
 

@@ -92,7 +92,6 @@ WebSearchEngines.Directives.directive('autocomplete', function() {
 
             // selecting a suggestion with RIGHT ARROW or ENTER
             $scope.select = function(suggestion) {
-                console.log('Suggestion is '+suggestion);
                 if(suggestion) {
                     $scope.searchParam = suggestion;
                     $scope.searchFilter = suggestion;

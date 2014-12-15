@@ -53,8 +53,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
      * Function for autosuggest
      */
     @Override
-    public String[] getSuggestions(String prefix) {
-        System.out.println(dictionary.size());
+    /*public String[] getSuggestions(String prefix) {
         String suggestions[] = new String[20];
         int count = 0;
         Set<String> dictKeys = dictionary.keySet();
@@ -62,8 +61,7 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
         while(dictIt.hasNext()) {
             String key = dictIt.next();
             if(key.startsWith(prefix.toLowerCase())) {
-                System.out.println(key);
-                suggestions[count] = key;
+                suggestions[count] = "\""+key+"\"";
                 count++;
                 if(count==20) {
                     break;
@@ -71,6 +69,102 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             }
         }
         return suggestions;
+    }*/
+
+    public String[] getSuggestions(String prefix, String location) {
+        Map<String,Integer> queries = new HashMap<String, Integer>();
+        prefix = prefix.toLowerCase();
+        String[] splitString = prefix.split(" ");
+        String suggestions[] = new String[20];
+        if(splitString.length < 2) {
+            int count = 0;
+            Set<String> dictKeys = dictionary.keySet();
+            Iterator<String> dictIt = dictKeys.iterator();
+            while(dictIt.hasNext()) {
+                String key = dictIt.next();
+                if(key.startsWith(prefix.toLowerCase())) {
+                    suggestions[count] = "\""+key+"\"";
+                    count++;
+                    if(count==20) {
+                        break;
+                    }
+                }
+            }
+
+        }
+        else {
+            char ch = prefix.charAt(0);
+            String fileName = new StringBuilder().append(_options._logPrefix+"/").append(ch).append(".tsv").toString();
+            Map<String, Integer> results = null;
+            try {
+                results = searchSuggestions(prefix, fileName);
+                System.out.println("1");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(results == null){
+                return suggestions;
+            }
+            suggestions = getPopularSuggestions(results);
+        }
+        System.out.println(suggestions);
+        return suggestions;
+    }
+
+    public String[] getPopularSuggestions(Map<String, Integer> queries){
+
+        List<String> result = entriesSortedByValues(queries);
+
+        String[] returnResult = new String[5];
+        for(int i=0;i<result.size();i++) {
+            if(i==5){
+                break;
+            }
+            returnResult[i]= "\""+result.get(i)+"\"";
+        }
+        return returnResult;
+    }
+
+
+    public Map<String, Integer> searchSuggestions(String prefix, String fileName ) throws IOException{
+
+        Map<String, Integer> results = new HashMap<String, Integer>();
+
+        BufferedReader br = new BufferedReader(new FileReader(fileName));
+        String line = br.readLine();
+        boolean start = true;
+        while((line = br.readLine()) != null){
+            String[] splitFileLine = line.split("\t");
+
+            if((splitFileLine[0].compareToIgnoreCase(prefix) >= 0) && splitFileLine[0].contains(prefix) ){
+                results.put(splitFileLine[0], Integer.parseInt(splitFileLine[1]));
+            }
+        }
+        return results;
+    }
+
+
+    public <K,V extends Comparable<? super V>>
+    List<K> entriesSortedByValues(Map<K,V> map) {
+
+        List<Entry<K,V>> sortedEntries = new ArrayList<Entry<K,V>>(map.entrySet());
+
+        Collections.sort(sortedEntries,
+                new Comparator<Entry<K,V>>() {
+                    @Override
+                    public int compare(Entry<K,V> e1, Entry<K,V> e2) {
+                        return e2.getValue().compareTo(e1.getValue());
+                    }
+                }
+        );
+
+        List<K> result = new ArrayList<K>();
+        for(int i=0;i<sortedEntries.size();i++){
+            Entry<K,V> en = sortedEntries.get(i);
+            result.add(en.getKey());
+        }
+
+        return result;
     }
 
     @Override
@@ -140,6 +234,9 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             sb.append(title);
             sb.append(" ");
             sb.append(body);
+            if(sb.toString().contains("..")) {
+                System.out.println(file.getName());
+            }
             int numWords = updateIndex(sb.toString().trim(), indexCount);
             documentIndexed.setNumberOfWords(numWords);
             _documents.put(indexCount, documentIndexed);
@@ -516,9 +613,9 @@ public class IndexerInvertedCompressed extends Indexer  implements Serializable 
             Vector<String> stopWords = new StopWords().getStopWords();
             String term = PorterStemming.getStemmedWord(lower);
             //System.out.println(document+"\n\n\n\n\n\n\n");
-            if(term.contains(".")) {
-                System.out.println(term);
-            }
+            /*if(term.contains(".")) {
+                continue;
+            }*/
             if(!stopWords.contains(term) && term != " " && term.length()>1) {
 
                 if (!dictionary.containsKey(term)) {
