@@ -7,7 +7,6 @@ WebSearchEngines.Services.factory('services.SearchService', function($rootScope,
     };
 
     QueryRetriever.getResults = function() {
-        console.log('In get '+results);
         return results;
     };
 

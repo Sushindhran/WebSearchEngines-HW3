@@ -34,7 +34,7 @@ class QueryHandler implements HttpHandler {
         // The raw user query
         public String _query = "";
         // How many results to return
-        private int _numResults = 10;
+        private int _numResults = 50;
 
         public int numterms;
 

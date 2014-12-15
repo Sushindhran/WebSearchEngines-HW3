@@ -1,7 +1,13 @@
-<div ng-controller="view.ResultsController as ctrl">
+<div class="main" ng-controller="view.ResultsController as ctrl">
+    <h1>Results</h1>
     <ul>
-        <li ng-repeat="result in results">
-            <div><a href="{{result.url}}">{{result.title}}</a></div>
+        <li ng-repeat="result in filteredResults">
+           <a href="" ng-click="getHtml(result.url)">{{result.title}}</a>
+            <br>
+            <br>
         </li>
     </ul>
+    <div data-pagination="" data-num-pages="numPages()"
+         data-current-page="currentPage" data-max-size="maxSize"
+         data-boundary-links="true"></div>
 </div>
