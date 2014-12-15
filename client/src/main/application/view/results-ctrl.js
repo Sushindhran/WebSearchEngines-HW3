@@ -13,7 +13,7 @@ WebSearchEngines.Controllers.controller('view.ResultsController',
 
             $scope.getHtml = function(url) {
                 console.log(url);
-                window.open = 'http://localhost:25810/'+url
+                window.location = 'http://localhost:25810/'+url
             };
 
             $scope.numPages = function () {
