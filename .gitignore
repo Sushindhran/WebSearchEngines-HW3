@@ -12,6 +12,6 @@ prf/
 
 .idea/
 
-.iml
+*.iml
 
 *.class

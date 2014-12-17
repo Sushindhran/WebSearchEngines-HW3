@@ -15,7 +15,8 @@ WebSearchEngines.Dependencies = [
     'websearchengines.directives',
     'websearchengines.constants',
     'websearchengines.controllers',
-    'ngRoute'
+    'ngRoute',
+    'ui.bootstrap'
 ];
 
 //Define the routes for the application using $routeProvider

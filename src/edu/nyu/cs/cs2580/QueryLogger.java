@@ -25,7 +25,7 @@ public class QueryLogger {
     }
 
     public int[] checkIfQueryExists() throws IOException {
-        int lineCount = -1, start = -1, results[] = {-1, -1};
+        int lineCount = -1, start = 1, results[] = {-1, -1};
         String line;
         boolean found = false;
         File file = new File(logPath + query.charAt(0) +".tsv");
@@ -47,6 +47,7 @@ public class QueryLogger {
                     //Insert point.
                     start = lineCount;
                 } else {
+                    start = lineCount;
                     break;
                 }
             }
@@ -69,7 +70,6 @@ public class QueryLogger {
             String line;
             StringBuilder builder = new StringBuilder(logPath).append(query.charAt(0) + "temp.tsv");
             BufferedWriter writer = new BufferedWriter(new FileWriter(builder.toString(), true));
-            System.out.println(results[0] + " " + results[1]);
             if(results[0] == -1 && results[1] == -1) {
                 writer.write(1 + "\n");
                 writer.write(query + "\t" + 1 + "\n");
@@ -84,6 +84,7 @@ public class QueryLogger {
                             line = x.toString();
                         } else if (lineCount == results[1]) {
                             writer.write(query + "\t" + 1 + "\n");
+                            writer.write(line + "\n");
                             break;
                         }
                     } else {

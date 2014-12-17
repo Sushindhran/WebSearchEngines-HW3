@@ -33,16 +33,39 @@ public class RankerComprehensive extends Ranker {
         System.out.println("Inside runQuery");
         try {
 
-            String a1="",city="",state="",country="";
+            //query.location = "Journal Square,Jersey City,NJ 07302,US";
+            String a1="",city="",state="",country="",zip="";
 
-            if (query.location.length() > 1) {
-                Scanner s = new Scanner(query.location).useDelimiter(",");
-                a1 = s.next();
-                city = s.next();
-                state = s.next();
-                state = state.split(" ")[0];
-                country = s.next();
+            String[] address = query.location.split(",");
+            if(address.length == 1) {
+                country = address[0];
             }
+            else if(address.length == 2) {
+                city = address[0];
+                country=address[1];
+            }
+            else if(address.length == 3) {
+                city = address[0];
+                state=address[1];
+                String[] s = state.split(" ");
+                if(s.length > 1) {
+                    state = s[0];
+                    zip = s[1];
+                }
+                country=address[2];
+            }
+            else if(address.length == 4) {
+                a1 = address[0];
+                city = address[1];
+                state=address[2];
+                String[] s = state.split(" ");
+                if(s.length > 1) {
+                    state = s[0];
+                    zip = s[1];
+                }
+                country=address[3];
+            }
+
 
 
 
@@ -55,6 +78,19 @@ public class RankerComprehensive extends Ranker {
                     retrieval_results.poll();
                 }*/
                 docId = doc._docid;
+            }
+
+            if (!zip.equals("")) {
+                query1 = new QueryPhrase(query._query + " \"" + city +" "+state+" "+ zip+ "\"");
+                query1.processQuery();
+                docId = -1;
+                while((doc = _indexer.nextDoc(query1, docId)) != null) {
+                    retrieval_results.add(runqueryQL(query1, doc._docid));
+/*                if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
+                    docId = doc._docid;
+                }
             }
 
             loc1 = false;
