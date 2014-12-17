@@ -69,7 +69,7 @@ WebSearchEngines.Controllers.controller('view.SearchController',
             $scope.getData = function(callbackFunc) {
                 $http({
                     method: 'GET',
-                    url: 'http://localhost:25810/search?query='+$scope.query+'&ranker=comprehensive&format=text'
+                    url: 'http://localhost:25810/search?query='+$scope.query+'&ranker=comprehensive&format=text&location='+$scope.location
                 }).success(function(data){
                     // With the data succesfully returned, call our callback
                     callbackFunc(data);

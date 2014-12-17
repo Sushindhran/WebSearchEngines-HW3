@@ -14,6 +14,8 @@ import java.util.*;
  */
 public class RankerFavorite extends Ranker {
 
+    boolean loc = true;
+
     public RankerFavorite(Options options,
                           CgiArguments arguments, Indexer indexer) {
         super(options, arguments, indexer);
@@ -26,26 +28,46 @@ public class RankerFavorite extends Ranker {
         ScoredDocument scoredDoc = null;
         int docId = -1;
         Vector<ScoredDocument> results = new Vector<ScoredDocument>();
-        Queue<ScoredDocument> retrieval_results = new PriorityQueue<ScoredDocument>(numResults);
+        HashSet<ScoredDocument> retrieval_results = new HashSet<ScoredDocument>(numResults);
         System.out.println("Inside runQuery");
         try {
-            while((doc = _indexer.nextDoc(query, docId)) != null) {
-                retrieval_results.add(runqueryQL(query, doc._docid));
-                if(numResults < retrieval_results.size()) {
+
+            Query query1 = new Query(query._query + " " + query.location);
+            query1.processQuery();
+
+            while((doc = _indexer.nextDoc(query1, docId)) != null) {
+                retrieval_results.add(runqueryQL(query1, doc._docid));
+/*                if(numResults < retrieval_results.size()) {
                     retrieval_results.poll();
-                }
+                }*/
                 docId = doc._docid;
             }
+
+            loc = false;
+            docId = -1;
+
+            query.processQuery();
+
+            while((doc = _indexer.nextDoc(query, docId)) != null) {
+                retrieval_results.add(runqueryQL(query, doc._docid));
+               /* if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
+                docId = doc._docid;
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
-        while ((scoredDoc = retrieval_results.poll()) != null) {
-
+/*        while ((scoredDoc = retrieval_results.poll()) != null) {
             results.add(scoredDoc);
-        }
+        }*/
+
+        results.addAll(retrieval_results);
+
         Collections.sort(results, Collections.reverseOrder());
         System.out.println("Results "+results);
         return results;
@@ -94,9 +116,17 @@ public class RankerFavorite extends Ranker {
             score += (Math.log(cumulativeVal)/Math.log(2));
         }
 
-        score += (Math.log(pageRank)/Math.log(2));
-        score += (Math.log(numviews)/Math.log(2));
-        return new ScoredDocument(d, Math.pow(2, score));
+        score = score * 0.65;
+        score += 0.39*(Math.log(pageRank) / Math.log(2));
+        score += 0.0001*(Math.log(numviews) / Math.log(2));
+
+        score = Math.pow(2, score);
+
+       if(loc) {
+           score = score + 1;
+       }
+
+        return new ScoredDocument(d, score);
     }
 
     public HashMap<String, Double> pseudoRelevanceFeedback(List<ScoredDocument> results, int numTerms) {

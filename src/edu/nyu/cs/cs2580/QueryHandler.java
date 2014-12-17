@@ -44,7 +44,7 @@ class QueryHandler implements HttpHandler {
 
         public String prefix;
 
-        public String location = null;
+        public String location = "";
 
         // The type of the ranker we will be using.
         public enum RankerType {
@@ -182,12 +182,13 @@ class QueryHandler implements HttpHandler {
             respondWithMsg(exchange, " Something wrong with the URI!", null);
         }
 
-        if (!uriPath.equals("/search") && !uriPath.equals("/location") && !uriPath.equals("/suggest") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
+        if (!uriPath.equals("/search") && !uriPath.equals("/suggest") && !uriPath.equals("/prf") && !uriPath.equals("/url") && !uriPath.equals("/favicon.ico")) {
             respondWithMsg(exchange, " "+ uriPath + " is not handled!", null);
         }
 
         // Process the CGI arguments.
         CgiArguments cgiArgs = new CgiArguments(uriQuery);
+
         if (uriPath.equals("/search") && cgiArgs._query.isEmpty()) {
             respondWithMsg(exchange, "No query is given!", null);
         }
@@ -203,14 +204,16 @@ class QueryHandler implements HttpHandler {
                 respondWithMsg(exchange,
                         "Ranker " + cgiArgs._rankerType.toString() + " is not valid!", null);
             }
-            QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query);
-            processedQuery.processQuery();
+            QueryPhrase processedQuery = new QueryPhrase(cgiArgs._query, cgiArgs.location);
+            //processedQuery.processQuery();
 
             // Ranking.
             scoredDocs = ranker.runQuery(processedQuery, cgiArgs._numResults);
 
-            // Processing the query.
+        }
+        // Processing the query.
 
+        if (uriPath.equals("/search")) {
             StringBuffer response = new StringBuffer();
             switch (cgiArgs._outputFormat) {
                 case TEXT:
@@ -245,6 +248,7 @@ class QueryHandler implements HttpHandler {
                 buf.append(term).append("\t");
                 buf.append(prf.get(term)).append("\n");
             }
+
             respondWithMsg(exchange, buf.toString(), null);
         } else if(uriPath.equals("/suggest")) {
             String suggestions[] = null;
@@ -257,6 +261,7 @@ class QueryHandler implements HttpHandler {
             location = cgiArgs.location;
             respondWithMsg(exchange, "Location set successfully", CgiArguments.OutputFormat.JSON);
         }
+
     }
 }
 

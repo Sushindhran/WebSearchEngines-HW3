@@ -71,4 +71,21 @@ class ScoredDocument implements Comparable<ScoredDocument> {
     public void setNumDocs(int _numdocs) {
         this._numdocs=_numdocs;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ScoredDocument that = (ScoredDocument) o;
+
+        if (_doc != null ? !_doc.equals(that._doc) : that._doc != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return _doc != null ? _doc.hashCode() : 0;
+    }
 }

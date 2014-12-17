@@ -15,11 +15,21 @@ import java.util.Vector;
  */
 public class Query {
     public String _query = null;
+    public String location = null;
     public Vector<String> _tokens = new Vector<String>();
+    public Vector<String> _tokens2 = new Vector<String>();
 
     public Query(String query) {
         _query = query;
     }
+    public Query(String query, String location) {
+        _query = query;
+        this.location = location;
+    }
+
+/*    public void appendLocation() {
+        _query = _query + " " + location;
+    }*/
 
     public void processQuery() {
         if (_query == null) {
@@ -31,6 +41,7 @@ public class Query {
             Vector<String> stopWords = new StopWords().getStopWords();
             if(!stopWords.contains(word)) {
                 _tokens.add(PorterStemming.getStemmedWord(word));
+                _tokens2.add(PorterStemming.getStemmedWord(word));
             }
         }
         s.close();

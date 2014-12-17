@@ -13,6 +13,10 @@ import java.util.*;
  */
 public class RankerComprehensive extends Ranker {
 
+    boolean loc1 = true;
+    boolean loc2 = true;
+    boolean loc3 = true;
+
     public RankerComprehensive(Options options,
                                CgiArguments arguments, Indexer indexer) {
         super(options, arguments, indexer);
@@ -25,26 +29,126 @@ public class RankerComprehensive extends Ranker {
         ScoredDocument scoredDoc = null;
         int docId = -1;
         Vector<ScoredDocument> results = new Vector<ScoredDocument>();
-        Queue<ScoredDocument> retrieval_results = new PriorityQueue<ScoredDocument>(numResults);
+        HashSet<ScoredDocument> retrieval_results = new HashSet<ScoredDocument>(numResults);
+        System.out.println("Inside runQuery");
         try {
-            while ((doc = _indexer.nextDoc(query, docId)) != null) {
-                retrieval_results.add(runqueryQL(query, doc._docid));
-                if (numResults < retrieval_results.size()) {
-                    retrieval_results.poll();
+
+            //query.location = "Journal Square,Jersey City,NJ 07302,US";
+            String a1="",city="",state="",country="",zip="";
+
+            String[] address = query.location.split(",");
+            if(address.length == 1) {
+                country = address[0];
+            }
+            else if(address.length == 2) {
+                city = address[0];
+                country=address[1];
+            }
+            else if(address.length == 3) {
+                city = address[0];
+                state=address[1];
+                String[] s = state.split(" ");
+                if(s.length > 1) {
+                    state = s[0];
+                    zip = s[1];
                 }
+                country=address[2];
+            }
+            else if(address.length == 4) {
+                a1 = address[0];
+                city = address[1];
+                state=address[2];
+                String[] s = state.split(" ");
+                if(s.length > 1) {
+                    state = s[0];
+                    zip = s[1];
+                }
+                country=address[3];
+            }
+
+
+
+
+            QueryPhrase query1 = new QueryPhrase(query._query + " \"" + query.location + "\"");
+            query1.processQuery();
+
+            while((doc = _indexer.nextDoc(query1, docId)) != null) {
+                retrieval_results.add(runqueryQL(query1, doc._docid));
+/*                if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
                 docId = doc._docid;
             }
+
+            if (!zip.equals("")) {
+                query1 = new QueryPhrase(query._query + " \"" + city +" "+state+" "+ zip+ "\"");
+                query1.processQuery();
+                docId = -1;
+                while((doc = _indexer.nextDoc(query1, docId)) != null) {
+                    retrieval_results.add(runqueryQL(query1, doc._docid));
+/*                if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
+                    docId = doc._docid;
+                }
+            }
+
+            loc1 = false;
+
+            query1 = new QueryPhrase(query._query + " \"" + city + "\"");
+            query1.processQuery();
+            docId = -1;
+            while((doc = _indexer.nextDoc(query1, docId)) != null) {
+                retrieval_results.add(runqueryQL(query1, doc._docid));
+/*                if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
+                docId = doc._docid;
+            }
+
+            loc2 = false;
+            query1 = new QueryPhrase(query._query + " \"" + state + "\"");
+            query1.processQuery();
+            docId = -1;
+            while((doc = _indexer.nextDoc(query1, docId)) != null) {
+                retrieval_results.add(runqueryQL(query1, doc._docid));
+/*                if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
+                docId = doc._docid;
+            }
+
+            loc3 = false;
+            docId = -1;
+
+            query.processQuery();
+
+            while((doc = _indexer.nextDoc(query, docId)) != null) {
+                retrieval_results.add(runqueryQL(query, doc._docid));
+               /* if(numResults < retrieval_results.size()) {
+                    retrieval_results.poll();
+                }*/
+                docId = doc._docid;
+            }
+
+            loc1 = true;
+
+            System.out.println("Location: " +query.location);
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
-        while ((scoredDoc = retrieval_results.poll()) != null) {
-
+/*        while ((scoredDoc = retrieval_results.poll()) != null) {
             results.add(scoredDoc);
-        }
+        }*/
+
+        results.addAll(retrieval_results);
+
         Collections.sort(results, Collections.reverseOrder());
+        //System.out.println("Results "+results);
         return results;
     }
 
@@ -61,7 +165,7 @@ public class RankerComprehensive extends Ranker {
         Vector<String> qv = new Vector<String>();
         float pageRank = d.getPageRank();
         int numviews = d.getNumViews();
-        for (String str : query._tokens) {
+        for (String str : query._tokens2) {
             //Check the token for spaces and handle them accordingly
             String[] temp = str.split(" ");
             if (temp.length > 1) {
@@ -92,11 +196,25 @@ public class RankerComprehensive extends Ranker {
             score += (Math.log(cumulativeVal) / Math.log(2));
         }
 
-        score = score * 0.65;
-        score += 0.39*(Math.log(pageRank) / Math.log(2));
-        score += 0.0001*(Math.log(numviews) / Math.log(2));
+        //score = score * 0.65;
+        //score += 0.0001*(Math.log(numviews) / Math.log(2));
 
-        ScoredDocument scoredDocument = new ScoredDocument(d, Math.pow(2, score));
+        score = Math.pow(2, score);
+
+        score = score * 0.65;
+        score += 0.39*pageRank;
+
+        if(loc1) {
+            score = score + 0.1;
+        }
+        if(loc2) {
+            score = score + 0.05;
+        }
+        if(loc3) {
+            score = score + 0.025;
+        }
+
+        ScoredDocument scoredDocument = new ScoredDocument(d, score);
         scoredDocument.setPageRank(pageRank);
         scoredDocument.setNumDocs(numviews);
         return scoredDocument;

@@ -490,7 +490,7 @@ public class IndexerInvertedOccurrence extends Indexer  implements Serializable 
 
                 if (!dictionary.containsKey(term)) {
                     dictionary.put(term, uniqueTermNum);
-                    reverseDictionary.put(uniqueTermNum, term);
+                    //reverseDictionary.put(uniqueTermNum, term);
 
                     ArrayList<Integer> occurrence = new ArrayList<Integer>();
                     occurrence.add(indexCount);
